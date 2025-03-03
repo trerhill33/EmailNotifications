@@ -1,0 +1,6 @@
+@EmailNotifications.API_HostAddress = http://localhost:5188
+
+GET {{EmailNotifications.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
