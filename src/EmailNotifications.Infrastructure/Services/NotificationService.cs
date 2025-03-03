@@ -5,6 +5,7 @@ using EmailNotifications.Infrastructure.Interfaces;
 using Microsoft.Extensions.Logging;
 using System.Net.Mail;
 using System.Text.Json;
+using EmailNotifications.Infrastructure.Models;
 
 namespace EmailNotifications.Infrastructure.Services;
 

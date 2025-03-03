@@ -3,6 +3,7 @@ using EmailNotifications.Application.Enums;
 namespace EmailNotifications.Application.Models;
 
 /// <summary>
+/// Factory Methods
 /// Provides type-safe methods for creating notification requests with their corresponding template models
 /// </summary>
 public static class NotificationTemplates

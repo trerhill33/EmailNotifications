@@ -1,4 +1,5 @@
 using EmailNotifications.Application.Models;
+using EmailNotifications.Infrastructure.Models;
 
 namespace EmailNotifications.Infrastructure.Interfaces;
 

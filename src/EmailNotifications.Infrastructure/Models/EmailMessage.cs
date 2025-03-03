@@ -1,6 +1,6 @@
 using System.Net.Mail;
 
-namespace EmailNotifications.Application.Models;
+namespace EmailNotifications.Infrastructure.Models;
 
 /// <summary>
 /// Represents an email message to be sent
@@ -51,4 +51,9 @@ public sealed record EmailMessage
     /// Gets or sets the priority of the email (1-5, where 1 is highest)
     /// </summary>
     public int Priority { get; init; } = 3;
+
+    /// <summary>
+    /// Gets or sets the collection of attachments for the email
+    /// </summary>
+    public IReadOnlyCollection<EmailAttachment> Attachments { get; init; } = Array.Empty<EmailAttachment>();
 }

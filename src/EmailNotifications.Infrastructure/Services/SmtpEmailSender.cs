@@ -3,6 +3,7 @@ using EmailNotifications.Infrastructure.Interfaces;
 using Microsoft.Extensions.Logging;
 using System.Net;
 using System.Net.Mail;
+using EmailNotifications.Infrastructure.Models;
 
 namespace EmailNotifications.Infrastructure.Services;
 
@@ -121,6 +122,13 @@ public class SmtpEmailSender(SmtpClient smtpClient, ILogger<SmtpEmailSender> log
         foreach (var recipient in emailMessage.Bcc)
         {
             mailMessage.Bcc.Add(recipient);
+        }
+
+        // Add attachments if any
+        foreach (var attachment in emailMessage.Attachments)
+        {
+            var stream = new MemoryStream(attachment.Content.ToArray());
+            mailMessage.Attachments.Add(new Attachment(stream, attachment.FileName, attachment.ContentType));
         }
 
         return mailMessage;
