@@ -41,13 +41,51 @@ public class NotificationService(
 
             var emailMessage = await CreateEmailMessageAsync(domainNotificationType, htmlBody, null, cancellationToken);
 
+            // Get email specification with recipient groups and recipients
+            var emailSpec = await GetEmailSpecificationAsync(domainNotificationType, cancellationToken);
+            if (emailSpec == null)
+            {
+                logger.LogError("Email specification not found for notification type {NotificationType}", request.Type);
+                return false;
+            }
+
+            // Add recipients from all groups to the email message
+            foreach (var group in emailSpec.RecipientGroups)
+            {
+                foreach (var recipient in group.Recipients)
+                {
+                    var mailAddress = new MailAddress(recipient.EmailAddress, recipient.DisplayName);
+                    switch (recipient.Type)
+                    {
+                        case RecipientType.To:
+                            emailMessage.To.Add(mailAddress);
+                            break;
+                        case RecipientType.Cc:
+                            emailMessage.Cc.Add(mailAddress);
+                            break;
+                        case RecipientType.Bcc:
+                            emailMessage.Bcc.Add(mailAddress);
+                            break;
+                    }
+                }
+            }
+
+            // If no recipients were added, log a warning
+            if (!emailMessage.To.Any() && !emailMessage.Cc.Any() && !emailMessage.Bcc.Any())
+            {
+                logger.LogWarning("No recipients found for notification type {NotificationType}", request.Type);
+                return false;
+            }
+
             await emailSender.SendEmailWithRetryAsync(
                 emailMessage,
                 maxRetryAttempts: 3,
                 retryDelayMilliseconds: 1000,
                 cancellationToken);
 
-            logger.LogInformation("Successfully sent notification for type {NotificationType}", request.Type);
+            logger.LogInformation("Successfully sent notification for type {NotificationType} to {RecipientCount} recipients", 
+                request.Type, 
+                emailMessage.To.Count + emailMessage.Cc.Count + emailMessage.Bcc.Count);
             return true;
         }
         catch (Exception ex)
@@ -78,7 +116,9 @@ public class NotificationService(
                 HtmlBody = htmlBody,
                 TextBody = textBody ?? emailSpec.TextBody,
                 Priority = emailSpec.Priority,
-                To = new List<MailAddress>() // Required by EmailMessage
+                To = new List<MailAddress>(),
+                Cc = new List<MailAddress>(),
+                Bcc = new List<MailAddress>()
             };
         }
         catch (Exception ex)

@@ -13,10 +13,10 @@ public enum RecipientType
     /// <summary>
     /// Carbon copy recipient in the CC field
     /// </summary>
-    CC = 2,
+    Cc = 2,
 
     /// <summary>
     /// Blind carbon copy recipient in the BCC field
     /// </summary>
-    BCC = 3
+    Bcc = 3
 }
