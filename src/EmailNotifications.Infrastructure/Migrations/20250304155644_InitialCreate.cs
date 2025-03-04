@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace EmailNotifications.Infrastructure.Persistence.Migrations
+namespace EmailNotifications.Infrastructure.Migrations
 {
     /// <inheritdoc />
     public partial class InitialCreate : Migration
@@ -20,16 +20,16 @@ namespace EmailNotifications.Infrastructure.Persistence.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    Name = table.Column<string>(type: "text", nullable: false),
-                    NotificationTypeId = table.Column<int>(type: "integer", nullable: false),
-                    Subject = table.Column<string>(type: "text", nullable: false),
+                    Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    NotificationType = table.Column<int>(type: "integer", nullable: false),
+                    Subject = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     HtmlBody = table.Column<string>(type: "text", nullable: false),
-                    TextBody = table.Column<string>(type: "text", nullable: true),
-                    FromAddress = table.Column<string>(type: "text", nullable: false),
-                    FromName = table.Column<string>(type: "text", nullable: true),
-                    ReplyToAddress = table.Column<string>(type: "text", nullable: true),
-                    Priority = table.Column<int>(type: "integer", nullable: false),
-                    IsActive = table.Column<bool>(type: "boolean", nullable: false),
+                    TextBody = table.Column<string>(type: "character varying(4000)", maxLength: 4000, nullable: true),
+                    FromAddress = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
+                    FromName = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    ReplyToAddress = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
+                    Priority = table.Column<int>(type: "integer", nullable: false, defaultValue: 3),
+                    IsActive = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     CreatedBy = table.Column<string>(type: "text", nullable: true),
                     LastModifiedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
@@ -193,10 +193,10 @@ namespace EmailNotifications.Infrastructure.Persistence.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_EmailSpecifications_NotificationTypeId",
+                name: "IX_EmailSpecifications_NotificationType",
                 schema: "notification",
                 table: "EmailSpecifications",
-                column: "NotificationTypeId");
+                column: "NotificationType");
         }
 
         /// <inheritdoc />

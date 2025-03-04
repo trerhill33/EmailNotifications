@@ -5,27 +5,18 @@ using Microsoft.Extensions.Logging;
 
 namespace EmailNotifications.Infrastructure.Persistence.Seeders;
 
-public class DatabaseSeeder
+public class DatabaseSeeder(NotificationDbContext context, ILogger<DatabaseSeeder> logger)
 {
-    private readonly NotificationDbContext _context;
-    private readonly ILogger<DatabaseSeeder> _logger;
-
-    public DatabaseSeeder(NotificationDbContext context, ILogger<DatabaseSeeder> logger)
-    {
-        _context = context;
-        _logger = logger;
-    }
-
     public async Task SeedAsync(CancellationToken cancellationToken = default)
     {
         try
         {
-            _logger.LogInformation("Starting database seeding");
+            logger.LogInformation("Starting database seeding");
 
             // Check if database has been seeded
-            if (await _context.EmailSpecifications.AnyAsync(cancellationToken))
+            if (await context.EmailSpecifications.AnyAsync(cancellationToken))
             {
-                _logger.LogInformation("Database has already been seeded");
+                logger.LogInformation("Database has already been seeded");
                 return;
             }
 
@@ -132,14 +123,14 @@ public class DatabaseSeeder
                 }
             };
 
-            await _context.EmailSpecifications.AddRangeAsync(emailSpecifications, cancellationToken);
+            await context.EmailSpecifications.AddRangeAsync(emailSpecifications, cancellationToken);
 
-            await _context.SaveChangesAsync(cancellationToken);
-            _logger.LogInformation("Database seeding completed successfully");
+            await context.SaveChangesAsync(cancellationToken);
+            logger.LogInformation("Database seeding completed successfully");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error seeding database");
+            logger.LogError(ex, "Error seeding database");
             throw;
         }
     }
