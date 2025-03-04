@@ -1,13 +1,11 @@
-using EmailNotifications.Application.Models;
-using EmailNotifications.Infrastructure.Exceptions;
-using EmailNotifications.Infrastructure.Interfaces;
-using EmailNotifications.Infrastructure.Configuration;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
-using System.Net;
 using System.Net.Mail;
 using System.Security.Cryptography.X509Certificates;
+using EmailNotifications.Infrastructure.Configuration;
+using EmailNotifications.Infrastructure.Exceptions;
+using EmailNotifications.Infrastructure.Interfaces;
 using EmailNotifications.Infrastructure.Models;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace EmailNotifications.Infrastructure.Services;
 

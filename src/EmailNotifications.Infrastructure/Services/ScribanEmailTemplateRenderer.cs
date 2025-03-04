@@ -1,11 +1,10 @@
+using System.Collections.Concurrent;
+using System.Security.Cryptography;
+using System.Text;
 using EmailNotifications.Domain.Enums;
 using EmailNotifications.Infrastructure.Interfaces;
 using Microsoft.Extensions.Logging;
 using Scriban;
-using Scriban.Runtime;
-using System.Collections.Concurrent;
-using System.Security.Cryptography;
-using System.Text;
 
 namespace EmailNotifications.Infrastructure.Services;
 

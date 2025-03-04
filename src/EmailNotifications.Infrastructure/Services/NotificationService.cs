@@ -1,12 +1,11 @@
+using System.Net.Mail;
 using EmailNotifications.Application.Interfaces;
 using EmailNotifications.Application.Models;
 using EmailNotifications.Domain.Entities;
 using EmailNotifications.Domain.Enums;
 using EmailNotifications.Infrastructure.Interfaces;
-using Microsoft.Extensions.Logging;
-using System.Net.Mail;
-using System.Text.Json;
 using EmailNotifications.Infrastructure.Models;
+using Microsoft.Extensions.Logging;
 
 namespace EmailNotifications.Infrastructure.Services;
 
@@ -34,7 +33,7 @@ public class NotificationService(
             logger.LogDebug("Rendering template for notification type {NotificationType}", request.Type);
 
             // Convert Application layer NotificationType to Domain layer NotificationType
-            var domainNotificationType = (Domain.Enums.NotificationType)request.Type;
+            var domainNotificationType = (NotificationType)request.Type;
 
             var htmlBody = await templateRenderer.RenderAsync(domainNotificationType, request.Data, cancellationToken);
 
