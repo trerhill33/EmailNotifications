@@ -14,6 +14,23 @@ public class EmailSpecificationRepository(
     ILogger<EmailSpecificationRepository> logger)
     : IEmailSpecificationRepository
 {
+    public async Task<IEnumerable<EmailSpecification>> GetAllAsync(CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            return await context.EmailSpecifications
+                .Include(x => x.RecipientGroups)
+                    .ThenInclude(g => g.Recipients)
+                .OrderBy(x => x.Name)
+                .ToListAsync(cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error retrieving all email specifications");
+            throw;
+        }
+    }
+
     public async Task<EmailSpecification?> GetByNotificationTypeAsync(NotificationType notificationType, CancellationToken cancellationToken = default)
     {
         try
@@ -103,13 +120,14 @@ public class EmailSpecificationRepository(
             throw;
         }
     }
-
-    public async Task<EmailSpecification> AddRecipientGroupAsync(Guid specificationId, EmailRecipientGroup group, CancellationToken cancellationToken = default)
+    
+    public async Task<IEnumerable<EmailRecipient>> GetRecipientsAsync(Guid specificationId, CancellationToken cancellationToken = default)
     {
         try
         {
             var specification = await context.EmailSpecifications
                 .Include(x => x.RecipientGroups)
+                    .ThenInclude(g => g.Recipients)
                 .FirstOrDefaultAsync(x => x.Id == specificationId, cancellationToken);
 
             if (specification == null)
@@ -117,77 +135,143 @@ public class EmailSpecificationRepository(
                 throw new InvalidOperationException($"Email specification with ID {specificationId} not found");
             }
 
-            specification.RecipientGroups.Add(group);
-            await context.SaveChangesAsync(cancellationToken);
-            return specification;
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error adding recipient group to email specification {SpecificationId}", specificationId);
-            throw;
-        }
-    }
-
-    public async Task<EmailSpecification> UpdateRecipientGroupAsync(Guid specificationId, EmailRecipientGroup group, CancellationToken cancellationToken = default)
-    {
-        try
-        {
-            var specification = await context.EmailSpecifications
-                .Include(x => x.RecipientGroups)
-                .FirstOrDefaultAsync(x => x.Id == specificationId, cancellationToken);
-
-            if (specification == null)
-            {
-                throw new InvalidOperationException($"Email specification with ID {specificationId} not found");
-            }
-
-            var existingGroup = specification.RecipientGroups.FirstOrDefault(g => g.Id == group.Id);
-            if (existingGroup == null)
-            {
-                throw new InvalidOperationException($"Recipient group with ID {group.Id} not found in specification {specificationId}");
-            }
-
-            // Update group properties
-            existingGroup.Name = group.Name;
-            existingGroup.Description = group.Description;
-            existingGroup.LastModifiedAt = DateTime.UtcNow;
-
-            await context.SaveChangesAsync(cancellationToken);
-            return specification;
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error updating recipient group {GroupId} in email specification {SpecificationId}", group.Id, specificationId);
-            throw;
-        }
-    }
-
-    public async Task<EmailSpecification> DeleteRecipientGroupAsync(Guid specificationId, Guid groupId, CancellationToken cancellationToken = default)
-    {
-        try
-        {
-            var specification = await context.EmailSpecifications
-                .Include(x => x.RecipientGroups)
-                .FirstOrDefaultAsync(x => x.Id == specificationId, cancellationToken);
-
-            if (specification == null)
-            {
-                throw new InvalidOperationException($"Email specification with ID {specificationId} not found");
-            }
-
-            var group = specification.RecipientGroups.FirstOrDefault(g => g.Id == groupId);
+            var group = specification.RecipientGroups.FirstOrDefault();
             if (group == null)
             {
-                throw new InvalidOperationException($"Recipient group with ID {groupId} not found in specification {specificationId}");
+                throw new InvalidOperationException($"No recipient group found for specification {specificationId}");
             }
 
-            specification.RecipientGroups.Remove(group);
-            await context.SaveChangesAsync(cancellationToken);
-            return specification;
+            return group.Recipients;
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error deleting recipient group {GroupId} from email specification {SpecificationId}", groupId, specificationId);
+            logger.LogError(ex, "Error retrieving recipients for specification {SpecificationId}", specificationId);
+            throw;
+        }
+    }
+
+    public async Task<EmailRecipient> AddRecipientAsync(Guid specificationId, EmailRecipient recipient, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var specification = await context.EmailSpecifications
+                .Include(x => x.RecipientGroups)
+                    .ThenInclude(g => g.Recipients)
+                .FirstOrDefaultAsync(x => x.Id == specificationId, cancellationToken);
+
+            if (specification == null)
+            {
+                throw new InvalidOperationException($"Email specification with ID {specificationId} not found");
+            }
+
+            var group = specification.RecipientGroups.FirstOrDefault();
+            if (group == null)
+            {
+                throw new InvalidOperationException($"No recipient group found for specification {specificationId}");
+            }
+
+            // Check for duplicate email
+            if (group.Recipients.Any(r => r.EmailAddress.Equals(recipient.EmailAddress, StringComparison.OrdinalIgnoreCase)))
+            {
+                throw new InvalidOperationException($"Recipient with email {recipient.EmailAddress} already exists in the group");
+            }
+
+            recipient.Id = Guid.NewGuid();
+            recipient.CreatedAt = DateTime.UtcNow;
+            recipient.LastModifiedAt = DateTime.UtcNow;
+            group.Recipients.Add(recipient);
+
+            await context.SaveChangesAsync(cancellationToken);
+            return recipient;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error adding recipient to specification {SpecificationId}", specificationId);
+            throw;
+        }
+    }
+
+    public async Task<EmailRecipient> UpdateRecipientAsync(Guid specificationId, EmailRecipient recipient, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var specification = await context.EmailSpecifications
+                .Include(x => x.RecipientGroups)
+                    .ThenInclude(g => g.Recipients)
+                .FirstOrDefaultAsync(x => x.Id == specificationId, cancellationToken);
+
+            if (specification == null)
+            {
+                throw new InvalidOperationException($"Email specification with ID {specificationId} not found");
+            }
+
+            var group = specification.RecipientGroups.FirstOrDefault();
+            if (group == null)
+            {
+                throw new InvalidOperationException($"No recipient group found for specification {specificationId}");
+            }
+
+            var existingRecipient = group.Recipients.FirstOrDefault(r => r.Id == recipient.Id);
+            if (existingRecipient == null)
+            {
+                throw new InvalidOperationException($"Recipient with ID {recipient.Id} not found in the group");
+            }
+
+            // If email is changing, check for duplicates
+            if (!existingRecipient.EmailAddress.Equals(recipient.EmailAddress, StringComparison.OrdinalIgnoreCase) &&
+                group.Recipients.Any(r => r.EmailAddress.Equals(recipient.EmailAddress, StringComparison.OrdinalIgnoreCase)))
+            {
+                throw new InvalidOperationException($"Recipient with email {recipient.EmailAddress} already exists in the group");
+            }
+
+            // Update recipient properties
+            existingRecipient.EmailAddress = recipient.EmailAddress;
+            existingRecipient.DisplayName = recipient.DisplayName;
+            existingRecipient.Type = recipient.Type;
+            existingRecipient.LastModifiedAt = DateTime.UtcNow;
+
+            await context.SaveChangesAsync(cancellationToken);
+            return existingRecipient;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error updating recipient in specification {SpecificationId}", specificationId);
+            throw;
+        }
+    }
+
+    public async Task DeleteRecipientAsync(Guid specificationId, string email, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var specification = await context.EmailSpecifications
+                .Include(x => x.RecipientGroups)
+                    .ThenInclude(g => g.Recipients)
+                .FirstOrDefaultAsync(x => x.Id == specificationId, cancellationToken);
+
+            if (specification == null)
+            {
+                throw new InvalidOperationException($"Email specification with ID {specificationId} not found");
+            }
+
+            var group = specification.RecipientGroups.FirstOrDefault();
+            if (group == null)
+            {
+                throw new InvalidOperationException($"No recipient group found for specification {specificationId}");
+            }
+
+            var recipient = group.Recipients.FirstOrDefault(r => r.EmailAddress.Equals(email, StringComparison.OrdinalIgnoreCase));
+            if (recipient == null)
+            {
+                throw new InvalidOperationException($"Recipient with email {email} not found in the group");
+            }
+
+            group.Recipients.Remove(recipient);
+            await context.SaveChangesAsync(cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error deleting recipient from specification {SpecificationId}", specificationId);
             throw;
         }
     }

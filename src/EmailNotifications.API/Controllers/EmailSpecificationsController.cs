@@ -12,6 +12,21 @@ public class EmailSpecificationsController(
     ILogger<EmailSpecificationsController> logger)
     : ControllerBase
 {
+    [HttpGet]
+    public async Task<ActionResult<IEnumerable<EmailSpecification>>> GetAll(CancellationToken cancellationToken)
+    {
+        try
+        {
+            var specifications = await repository.GetAllAsync(cancellationToken);
+            return Ok(specifications);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error retrieving all email specifications");
+            return StatusCode(500, "An error occurred while retrieving email specifications");
+        }
+    }
+
     [HttpGet("{notificationType}")]
     public async Task<ActionResult<EmailSpecification>> GetByNotificationType(NotificationType notificationType, CancellationToken cancellationToken)
     {
@@ -82,16 +97,13 @@ public class EmailSpecificationsController(
         }
     }
 
-    [HttpPost("{specificationId}/recipient-groups")]
-    public async Task<ActionResult<EmailSpecification>> AddRecipientGroup(
-        Guid specificationId,
-        EmailRecipientGroup group,
-        CancellationToken cancellationToken)
+    [HttpGet("{specificationId}/recipients")]
+    public async Task<ActionResult<IEnumerable<EmailRecipient>>> GetRecipients(Guid specificationId, CancellationToken cancellationToken)
     {
         try
         {
-            var updated = await repository.AddRecipientGroupAsync(specificationId, group, cancellationToken);
-            return Ok(updated);
+            var recipients = await repository.GetRecipientsAsync(specificationId, cancellationToken);
+            return Ok(recipients);
         }
         catch (InvalidOperationException ex)
         {
@@ -99,48 +111,36 @@ public class EmailSpecificationsController(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error adding recipient group");
-            return StatusCode(500, "An error occurred while adding the recipient group");
+            logger.LogError(ex, "Error retrieving recipients for specification {SpecificationId}", specificationId);
+            return StatusCode(500, "An error occurred while retrieving recipients");
         }
     }
 
-    [HttpPut("{specificationId}/recipient-groups/{groupId}")]
-    public async Task<ActionResult<EmailSpecification>> UpdateRecipientGroup(
-        Guid specificationId,
-        Guid groupId,
-        EmailRecipientGroup group,
-        CancellationToken cancellationToken)
+    [HttpPost("{specificationId}/recipients")]
+    public async Task<ActionResult<EmailRecipient>> AddRecipient(Guid specificationId, EmailRecipient recipient, CancellationToken cancellationToken)
     {
-        if (groupId != group.Id)
-        {
-            return BadRequest("Group ID mismatch");
-        }
-
         try
         {
-            var updated = await repository.UpdateRecipientGroupAsync(specificationId, group, cancellationToken);
-            return Ok(updated);
+            var added = await repository.AddRecipientAsync(specificationId, recipient, cancellationToken);
+            return CreatedAtAction(nameof(GetRecipients), new { specificationId }, added);
         }
         catch (InvalidOperationException ex)
         {
-            return NotFound(ex.Message);
+            return BadRequest(ex.Message);
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error updating recipient group");
-            return StatusCode(500, "An error occurred while updating the recipient group");
+            logger.LogError(ex, "Error adding recipient to specification {SpecificationId}", specificationId);
+            return StatusCode(500, "An error occurred while adding the recipient");
         }
     }
 
-    [HttpDelete("{specificationId}/recipient-groups/{groupId}")]
-    public async Task<ActionResult<EmailSpecification>> DeleteRecipientGroup(
-        Guid specificationId,
-        Guid groupId,
-        CancellationToken cancellationToken)
+    [HttpPut("{specificationId}/recipients")]
+    public async Task<ActionResult<EmailRecipient>> UpdateRecipient(Guid specificationId, EmailRecipient recipient, CancellationToken cancellationToken)
     {
         try
         {
-            var updated = await repository.DeleteRecipientGroupAsync(specificationId, groupId, cancellationToken);
+            var updated = await repository.UpdateRecipientAsync(specificationId, recipient, cancellationToken);
             return Ok(updated);
         }
         catch (InvalidOperationException ex)
@@ -149,8 +149,27 @@ public class EmailSpecificationsController(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error deleting recipient group");
-            return StatusCode(500, "An error occurred while deleting the recipient group");
+            logger.LogError(ex, "Error updating recipient in specification {SpecificationId}", specificationId);
+            return StatusCode(500, "An error occurred while updating the recipient");
+        }
+    }
+
+    [HttpDelete("{specificationId}/recipients/{email}")]
+    public async Task<IActionResult> DeleteRecipient(Guid specificationId, string email, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await repository.DeleteRecipientAsync(specificationId, email, cancellationToken);
+            return NoContent();
+        }
+        catch (InvalidOperationException ex)
+        {
+            return NotFound(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error deleting recipient from specification {SpecificationId}", specificationId);
+            return StatusCode(500, "An error occurred while deleting the recipient");
         }
     }
 } 
