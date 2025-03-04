@@ -1,4 +1,5 @@
 using EmailNotifications.Domain.Common;
+using EmailNotifications.Domain.Enums;
 
 namespace EmailNotifications.Domain.Entities;
 
@@ -13,9 +14,9 @@ public sealed class EmailSpecification : AuditableEntity
     public required string Name { get; set; }
 
     /// <summary>
-    /// The notification type ID associated with this specification
+    /// The notification type associated with this specification
     /// </summary>
-    public int NotificationTypeId { get; set; }
+    public NotificationType NotificationType { get; set; }
 
     /// <summary>
     /// The subject line of the email

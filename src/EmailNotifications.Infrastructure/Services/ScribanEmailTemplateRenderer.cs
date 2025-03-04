@@ -1,3 +1,4 @@
+using EmailNotifications.Domain.Enums;
 using EmailNotifications.Infrastructure.Interfaces;
 using Microsoft.Extensions.Logging;
 using Scriban;
@@ -5,7 +6,6 @@ using Scriban.Runtime;
 using System.Collections.Concurrent;
 using System.Security.Cryptography;
 using System.Text;
-using EmailNotifications.Application.Enums;
 
 namespace EmailNotifications.Infrastructure.Services;
 
@@ -28,27 +28,22 @@ internal sealed class ScribanEmailTemplateRenderer : ITemplateRenderer
         _wrapperTemplate = LoadWrapperTemplate();
     }
 
-    public async Task<string> RenderAsync<TModel>(int notificationTypeId, TModel model, CancellationToken cancellationToken = default)
-        where TModel : class
+    public async Task<string> RenderAsync<TModel>(NotificationType notificationType, TModel model, CancellationToken cancellationToken = default) where TModel : class
     {
-        ArgumentNullException.ThrowIfNull(model);
-
         try
         {
-            _logger.LogDebug("Starting template rendering for notification type ID: {NotificationTypeId}", notificationTypeId);
+            _logger.LogDebug("Starting template rendering for notification type: {NotificationType}", notificationType);
 
-            // Step 1: Get the email specification from the repository
-            var emailSpec = await _emailSpecificationRepository.GetByNotificationTypeIdAsync(notificationTypeId, cancellationToken);
+            var emailSpec = await _emailSpecificationRepository.GetByNotificationTypeAsync(notificationType, cancellationToken);
             if (emailSpec == null)
             {
-                _logger.LogError("Email specification not found for notification type ID: {NotificationTypeId}", notificationTypeId);
-                throw new InvalidOperationException($"Email specification not found for notification type ID: {notificationTypeId}");
+                _logger.LogError("Email specification not found for notification type: {NotificationType}", notificationType);
+                throw new InvalidOperationException($"Email specification not found for notification type: {notificationType}");
             }
 
-            _logger.LogDebug("Retrieved email specification {SpecificationName} for notification type ID: {NotificationTypeId}",
-                emailSpec.Name, notificationTypeId);
+            _logger.LogDebug("Retrieved email specification {SpecificationName} for notification type: {NotificationType}",
+                emailSpec.Name, notificationType);
 
-            // Step 2: Parse and cache the template
             var template = _templateCache.GetOrAdd(
                 GetTemplateKey(emailSpec.HtmlBody),
                 key =>
@@ -59,36 +54,23 @@ internal sealed class ScribanEmailTemplateRenderer : ITemplateRenderer
 
             if (template.HasErrors)
             {
-                _logger.LogError("Template parsing errors for specification {SpecificationName}: {Errors}",
-                    emailSpec.Name, string.Join("; ", template.Messages));
-                throw new InvalidOperationException($"Template parsing failed: {string.Join("; ", template.Messages)}");
+                var errors = string.Join(", ", template.Messages.Select(m => m.Message));
+                _logger.LogError("Template parsing errors: {Errors}", errors);
+                throw new InvalidOperationException($"Template parsing errors: {errors}");
             }
 
-            // Step 3: Create template context and render
-            var context = new TemplateContext();
-            var scriptObject = new ScriptObject();
-            scriptObject.Import(model);
-            context.PushGlobal(scriptObject);
+            var result = await template.RenderAsync(new { model });
+            if (string.IsNullOrWhiteSpace(result))
+            {
+                _logger.LogWarning("Template rendered to empty string for notification type: {NotificationType}", notificationType);
+            }
 
-            _logger.LogDebug("Rendering content for specification {SpecificationName}", emailSpec.Name);
-            var notificationHtml = await template.RenderAsync(context);
-
-            // Step 4: Apply wrapper template
-            var wrapperTemplate = Template.Parse(_wrapperTemplate);
-            var wrapperContext = new TemplateContext();
-            var wrapperScriptObject = new ScriptObject();
-            wrapperScriptObject.Add("Content", notificationHtml);
-            wrapperContext.PushGlobal(wrapperScriptObject);
-
-            _logger.LogDebug("Applying wrapper template to rendered content");
-            var finalHtml = await wrapperTemplate.RenderAsync(wrapperContext);
-
-            _logger.LogInformation("Successfully rendered template for notification type ID: {NotificationTypeId}", notificationTypeId);
-            return finalHtml;
+            _logger.LogInformation("Successfully rendered template for notification type: {NotificationType}", notificationType);
+            return result;
         }
-        catch (Exception ex) when (ex is not InvalidOperationException)
+        catch (Exception ex)
         {
-            _logger.LogError(ex, "Error rendering template for notification type ID: {NotificationTypeId}", notificationTypeId);
+            _logger.LogError(ex, "Error rendering template for notification type: {NotificationType}", notificationType);
             throw;
         }
     }
@@ -104,37 +86,24 @@ internal sealed class ScribanEmailTemplateRenderer : ITemplateRenderer
     {
         try
         {
-            _logger.LogDebug("Loading email wrapper template");
+            _logger.LogDebug("Loading email wrapper template from embedded resource");
 
-            // Load from the Infrastructure/Templates directory
-            var path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Templates", "email_wrapper_template.html");
+            var assembly = typeof(ScribanEmailTemplateRenderer).Assembly;
+            var resourceName = "EmailNotifications.Infrastructure.Templates.email_wrapper_template.html";
 
-            // If not found in the bin directory, try the source directory
-            if (!File.Exists(path))
+            using var stream = assembly.GetManifestResourceStream(resourceName);
+            if (stream == null)
             {
-                _logger.LogDebug("Wrapper template not found in bin directory, searching in project structure");
-                // Try to find it in the project directory structure
-                var projectDir = Path.GetDirectoryName(typeof(ScribanEmailTemplateRenderer).Assembly.Location) ?? "";
-                while (!string.IsNullOrEmpty(projectDir) && !Directory.Exists(Path.Combine(projectDir, "Templates")))
-                {
-                    projectDir = Path.GetDirectoryName(projectDir) ?? "";
-                }
-
-                if (!string.IsNullOrEmpty(projectDir))
-                {
-                    path = Path.Combine(projectDir, "Templates", "email_wrapper_template.html");
-                }
-            }
-
-            if (!File.Exists(path))
-            {
-                var error = $"Email wrapper template not found. Searched in: {path}";
+                var error = $"Email wrapper template not found in embedded resources. Resource name: {resourceName}";
                 _logger.LogError(error);
                 throw new FileNotFoundException(error);
             }
 
-            _logger.LogInformation("Successfully loaded wrapper template from {Path}", path);
-            return File.ReadAllText(path);
+            using var reader = new StreamReader(stream);
+            var template = reader.ReadToEnd();
+            
+            _logger.LogInformation("Successfully loaded wrapper template from embedded resource");
+            return template;
         }
         catch (Exception ex) when (ex is not FileNotFoundException)
         {

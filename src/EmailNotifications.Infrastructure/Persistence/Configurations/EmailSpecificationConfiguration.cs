@@ -1,18 +1,19 @@
 using EmailNotifications.Domain.Entities;
+using EmailNotifications.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace EmailNotifications.Infrastructure.Persistence.Configurations;
 
 /// <summary>
-/// Configuration for the <see cref="EmailSpecification"/> entity.
+/// Configuration for the EmailSpecification entity
 /// </summary>
 public class EmailSpecificationConfiguration : IEntityTypeConfiguration<EmailSpecification>
 {
     /// <summary>
-    /// Configures the entity.
+    /// Configures the entity
     /// </summary>
-    /// <param name="builder">The builder to be used to configure the entity.</param>
+    /// <param name="builder">The entity type builder</param>
     public void Configure(EntityTypeBuilder<EmailSpecification> builder)
     {
         builder.ToTable("EmailSpecifications");
@@ -20,31 +21,40 @@ public class EmailSpecificationConfiguration : IEntityTypeConfiguration<EmailSpe
         builder.HasKey(e => e.Id);
 
         builder.Property(e => e.Name)
-            .IsRequired();
+            .IsRequired()
+            .HasMaxLength(100);
 
-        builder.Property(e => e.NotificationTypeId)
-            .IsRequired();
+        builder.Property(e => e.NotificationType)
+            .IsRequired()
+            .HasConversion<int>();
 
         builder.Property(e => e.Subject)
-            .IsRequired();
+            .IsRequired()
+            .HasMaxLength(200);
 
         builder.Property(e => e.HtmlBody)
             .IsRequired();
 
-        builder.Property(e => e.TextBody);
+        builder.Property(e => e.TextBody)
+            .HasMaxLength(4000);
 
         builder.Property(e => e.FromAddress)
-            .IsRequired();
+            .IsRequired()
+            .HasMaxLength(256);
 
-        builder.Property(e => e.FromName);
+        builder.Property(e => e.FromName)
+            .HasMaxLength(100);
 
-        builder.Property(e => e.ReplyToAddress);
+        builder.Property(e => e.ReplyToAddress)
+            .HasMaxLength(256);
 
         builder.Property(e => e.Priority)
-            .IsRequired();
+            .IsRequired()
+            .HasDefaultValue(3);
 
         builder.Property(e => e.IsActive)
-            .IsRequired();
+            .IsRequired()
+            .HasDefaultValue(true);
 
         builder.Property(e => e.CreatedAt)
             .IsRequired();
@@ -61,7 +71,7 @@ public class EmailSpecificationConfiguration : IEntityTypeConfiguration<EmailSpe
 
         builder.HasIndex(e => e.IsActive);
 
-        // Create an index on NotificationTypeId for faster lookups
-        builder.HasIndex(e => e.NotificationTypeId);
+        // Create an index on NotificationType for faster lookups
+        builder.HasIndex(e => e.NotificationType);
     }
 }

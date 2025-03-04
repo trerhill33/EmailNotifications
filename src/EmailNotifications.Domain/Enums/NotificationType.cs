@@ -1,7 +1,7 @@
-namespace EmailNotifications.Application.Enums;
+namespace EmailNotifications.Domain.Enums;
 
 /// <summary>
-/// Represents the type of notification to be sent
+/// Represents the type of notification being sent
 /// </summary>
 public enum NotificationType
 {
@@ -19,4 +19,4 @@ public enum NotificationType
     /// Welcome email sent to new users
     /// </summary>
     Welcome = 3
-}
+} 

@@ -1,17 +1,19 @@
+using EmailNotifications.Domain.Enums;
+
 namespace EmailNotifications.Infrastructure.Interfaces;
 
 /// <summary>
-/// Service for rendering templates
+/// Interface for rendering email templates
 /// </summary>
 public interface ITemplateRenderer
 {
     /// <summary>
-    /// Renders a template for the specified notification type with the provided model
+    /// Renders an email template with the specified model
     /// </summary>
-    /// <typeparam name="TModel">The type of the model</typeparam>
-    /// <param name="notificationTypeId">The notification type ID that determines which template to use</param>
-    /// <param name="model">The model to use for rendering</param>
+    /// <typeparam name="TModel">The type of the model to use for rendering</typeparam>
+    /// <param name="notificationType">The notification type that determines which template to use</param>
+    /// <param name="model">The model to use for rendering the template</param>
     /// <param name="cancellationToken">The cancellation token</param>
-    /// <returns>The rendered template as HTML</returns>
-    Task<string> RenderAsync<TModel>(int notificationTypeId, TModel model, CancellationToken cancellationToken = default) where TModel : class;
+    /// <returns>The rendered template as a string</returns>
+    Task<string> RenderAsync<TModel>(NotificationType notificationType, TModel model, CancellationToken cancellationToken = default) where TModel : class;
 }

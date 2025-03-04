@@ -1,13 +1,13 @@
 using EmailNotifications.Application.Interfaces;
+using EmailNotifications.Infrastructure.Configuration;
 using EmailNotifications.Infrastructure.Interfaces;
 using EmailNotifications.Infrastructure.Persistence;
+using EmailNotifications.Infrastructure.Persistence.Seeders;
 using EmailNotifications.Infrastructure.Repositories;
 using EmailNotifications.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using System.Net;
-using System.Net.Mail;
 
 namespace EmailNotifications.Infrastructure;
 
@@ -35,29 +35,8 @@ public static class DependencyInjection
         // Add repositories
         services.AddScoped<IEmailSpecificationRepository, EmailSpecificationRepository>();
 
-        // Add SMTP client
-        services.AddSingleton(provider =>
-        {
-            var smtpConfig = configuration.GetSection("Smtp");
-
-            var smtpClient = new SmtpClient
-            {
-                Host = smtpConfig["Host"] ?? "localhost",
-                Port = int.Parse(smtpConfig["Port"] ?? "25"),
-                EnableSsl = bool.Parse(smtpConfig["EnableSsl"] ?? "false"),
-                DeliveryMethod = SmtpDeliveryMethod.Network
-            };
-
-            // Add credentials if provided
-            if (!string.IsNullOrEmpty(smtpConfig["Username"]) && !string.IsNullOrEmpty(smtpConfig["Password"]))
-            {
-                smtpClient.Credentials = new NetworkCredential(
-                    smtpConfig["Username"],
-                    smtpConfig["Password"]);
-            }
-
-            return smtpClient;
-        });
+        // Configure mail relay settings
+        services.Configure<MailRelaySettings>(configuration.GetSection("MailRelay"));
 
         // Add infrastructure services
         services.AddScoped<IEmailSender, SmtpEmailSender>();
@@ -66,17 +45,16 @@ public static class DependencyInjection
         // Add application services
         services.AddScoped<INotificationService, NotificationService>();
 
+        // Register the database seeder
+        services.AddScoped<DatabaseSeeder>();
+
         return services;
     }
 
-    // Implementation of IServiceProviderAccessor for DI registration
-    private class ServiceProviderAccessorImpl : IServiceProviderAccessor
+    public static async Task SeedDatabaseAsync(this IServiceProvider serviceProvider)
     {
-        public ServiceProviderAccessorImpl(IServiceProvider serviceProvider)
-        {
-            ServiceProvider = serviceProvider;
-        }
-
-        public IServiceProvider ServiceProvider { get; }
+        using var scope = serviceProvider.CreateScope();
+        var seeder = scope.ServiceProvider.GetRequiredService<DatabaseSeeder>();
+        await seeder.SeedAsync();
     }
 }

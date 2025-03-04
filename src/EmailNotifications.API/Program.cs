@@ -27,4 +27,7 @@ app.UseAuthorization();
 
 app.MapControllers();
 
+// Seed the database
+await app.Services.SeedDatabaseAsync();
+
 app.Run();

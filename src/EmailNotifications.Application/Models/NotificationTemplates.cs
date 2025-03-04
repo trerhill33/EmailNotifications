@@ -11,7 +11,7 @@ public static class NotificationTemplates
     public static NotificationRequest<CreateUserTemplateModel> UserCreated(string firstName, string lastName, string formattedDate)
     {
         var model = new CreateUserTemplateModel(firstName, lastName, formattedDate);
-        return new NotificationRequest<CreateUserTemplateModel>(NotificationType.UserCreated, model);
+        return new NotificationRequest<CreateUserTemplateModel>(NotificationType.NewUser, model);
     }
 
     public static NotificationRequest<ResetPasswordTemplateModel> PasswordReset(string firstName, string oneTimePassword, string expiryTimeFormatted)
@@ -20,9 +20,9 @@ public static class NotificationTemplates
         return new NotificationRequest<ResetPasswordTemplateModel>(NotificationType.PasswordReset, model);
     }
 
-    public static NotificationRequest<PasswordChangedTemplateModel> PasswordChanged(string firstName, DateTime changeDate)
+    public static NotificationRequest<WelcomeTemplateModel> Welcome(string firstName)
     {
-        var model = new PasswordChangedTemplateModel(firstName, changeDate);
-        return new NotificationRequest<PasswordChangedTemplateModel>(NotificationType.PasswordChanged, model);
+        var model = new WelcomeTemplateModel(firstName);
+        return new NotificationRequest<WelcomeTemplateModel>(NotificationType.Welcome, model);
     }
 }
