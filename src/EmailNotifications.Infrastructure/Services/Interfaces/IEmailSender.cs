@@ -1,4 +1,3 @@
-using System.Threading.Tasks;
 using EmailNotifications.Infrastructure.Models;
 
 namespace EmailNotifications.Infrastructure.Services.Interfaces;

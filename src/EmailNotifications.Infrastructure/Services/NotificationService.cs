@@ -10,7 +10,7 @@ using Microsoft.Extensions.Logging;
 namespace EmailNotifications.Infrastructure.Services;
 
 /// <summary>
-/// Service for handling email notifications
+/// Service that handles sending email notifications
 /// </summary>
 public class NotificationService(
     IEmailSender emailSender,
@@ -20,136 +20,114 @@ public class NotificationService(
     : INotificationService
 {
     /// <summary>
-    /// Sends an email notification
+    /// Processes and sends a notification request
     /// </summary>
-    /// <typeparam name="T">The type of the template model</typeparam>
-    /// <param name="request">The notification request</param>
-    /// <param name="cancellationToken">The cancellation token</param>
-    /// <returns>True if the notification was sent successfully, false otherwise</returns>
-    public async Task<bool> SendAsync<T>(NotificationRequest<T> request, CancellationToken cancellationToken = default) where T : class, ITemplateModel
+    public async Task<bool> SendAsync<T>(NotificationRequest<T> request, CancellationToken cancellationToken = default)
+        where T : class, ITemplateModel
     {
+        ArgumentNullException.ThrowIfNull(request);
+        ArgumentNullException.ThrowIfNull(request.Data);
+        
         try
         {
-            logger.LogDebug("Rendering template for notification type {NotificationType}", request.Type);
-
-            // Convert Application layer NotificationType to Domain layer NotificationType
-            var domainNotificationType = (NotificationType)request.Type;
-
-            var htmlBody = await templateRenderer.RenderAsync(domainNotificationType, request.Data, cancellationToken);
-
-            logger.LogDebug("Creating email message for notification type {NotificationType}", request.Type);
-
-            var emailMessage = await CreateEmailMessageAsync(domainNotificationType, htmlBody, null, cancellationToken);
-
-            // Get email specification with recipient groups and recipients
-            var emailSpec = await GetEmailSpecificationAsync(domainNotificationType, cancellationToken);
+            logger.LogInformation("Starting notification process for type {NotificationType}", request.Type);
+            
+            // Step 1: Retrieve email specification
+            var emailSpec = await GetEmailSpecificationAsync((int)request.Type, cancellationToken);
             if (emailSpec == null)
             {
-                logger.LogError("Email specification not found for notification type {NotificationType}", request.Type);
+                logger.LogWarning("No email specification found for notification type {NotificationType}", request.Type);
                 return false;
             }
-
-            // Add recipients from all groups to the email message
-            foreach (var group in emailSpec.RecipientGroups)
-            {
-                foreach (var recipient in group.Recipients)
-                {
-                    var mailAddress = new MailAddress(recipient.EmailAddress, recipient.DisplayName);
-                    switch (recipient.Type)
-                    {
-                        case RecipientType.To:
-                            emailMessage.To.Add(mailAddress);
-                            break;
-                        case RecipientType.Cc:
-                            emailMessage.Cc.Add(mailAddress);
-                            break;
-                        case RecipientType.Bcc:
-                            emailMessage.Bcc.Add(mailAddress);
-                            break;
-                    }
-                }
-            }
-
-            // If no recipients were added, log a warning
-            if (!emailMessage.To.Any() && !emailMessage.Cc.Any() && !emailMessage.Bcc.Any())
+            
+            // Step 2: Render the template with provided data
+            logger.LogDebug("Rendering template for email specification {Id}", emailSpec.Id);
+            var htmlBody = await templateRenderer.StartRenderingAsync(emailSpec.HtmlBody, request.Data, cancellationToken);
+            
+            // Step 3: Create the email message with rendered content
+            logger.LogDebug("Creating email message for notification type {NotificationType}", request.Type);
+            var emailMessage = CreateEmailMessage(emailSpec, htmlBody);
+            
+            // Step 4: Add recipients to the email message
+            logger.LogDebug("Adding recipients for email specification {Id}", emailSpec.Id);
+            AddRecipients(emailMessage, emailSpec);
+            
+            // Check if we have any recipients
+            if (emailMessage.To.Count == 0 && emailMessage.Cc.Count == 0 && emailMessage.Bcc.Count == 0)
             {
                 logger.LogWarning("No recipients found for notification type {NotificationType}", request.Type);
                 return false;
             }
-
-            await emailSender.SendEmailWithRetryAsync(
-                emailMessage,
-                maxRetryAttempts: 3,
-                retryDelayMilliseconds: 1000,
-                cancellationToken);
-
-            logger.LogInformation("Successfully sent notification for type {NotificationType} to {RecipientCount} recipients", 
-                request.Type, 
+            
+            // Step 5: Send the email
+            logger.LogDebug("Sending email for notification type {NotificationType}", request.Type);
+            await emailSender.SendEmailAsync(emailMessage, cancellationToken);
+            
+            logger.LogInformation(
+                "Successfully sent notification for type {NotificationType} to {RecipientCount} recipients",
+                request.Type,
                 emailMessage.To.Count + emailMessage.Cc.Count + emailMessage.Bcc.Count);
             return true;
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error sending notification for type {NotificationType}", request.Type);
+            logger.LogError(ex, "Error processing notification for type {NotificationType}", request.Type);
             return false;
         }
     }
-
-    private async Task<EmailMessage> CreateEmailMessageAsync(NotificationType notificationType, string htmlBody, string? textBody, CancellationToken cancellationToken)
+    
+    /// <summary>
+    /// Retrieves the email specification for the given notification type
+    /// </summary>
+    private async Task<EmailSpecification?> GetEmailSpecificationAsync(int notificationType, CancellationToken cancellationToken)
     {
-        try
+        logger.LogDebug("Retrieving email specification for notification type {NotificationType}", notificationType);
+        return await emailSpecificationRepository.GetByNotificationTypeAsync((NotificationType)notificationType, cancellationToken);
+    }
+    
+    /// <summary>
+    /// Adds recipients to the email message from the email specification
+    /// </summary>
+    private void AddRecipients(EmailMessage emailMessage, EmailSpecification emailSpec)
+    {
+        foreach (var group in emailSpec.RecipientGroups)
         {
-            logger.LogDebug("Retrieving email specification for notification type {NotificationType}", notificationType);
-
-            var emailSpec = await GetEmailSpecificationAsync(notificationType, cancellationToken);
-            if (emailSpec == null)
+            foreach (var recipient in group.Recipients)
             {
-                logger.LogError("Email specification not found for notification type {NotificationType}", notificationType);
-                throw new InvalidOperationException($"Email specification not found for notification type {notificationType}");
+                var mailAddress = new MailAddress(recipient.EmailAddress, recipient.DisplayName);
+                switch (recipient.Type)
+                {
+                    case RecipientType.To:
+                        emailMessage.To.Add(mailAddress);
+                        break;
+                    case RecipientType.Cc:
+                        emailMessage.Cc.Add(mailAddress);
+                        break;
+                    case RecipientType.Bcc:
+                        emailMessage.Bcc.Add(mailAddress);
+                        break;
+                }
             }
-
-            return new EmailMessage
-            {
-                From = new MailAddress(emailSpec.FromAddress, emailSpec.FromName),
-                ReplyTo = emailSpec.ReplyToAddress != null ? new MailAddress(emailSpec.ReplyToAddress) : null,
-                Subject = emailSpec.Subject,
-                HtmlBody = htmlBody,
-                TextBody = textBody ?? emailSpec.TextBody,
-                Priority = emailSpec.Priority,
-                To = new List<MailAddress>(),
-                Cc = new List<MailAddress>(),
-                Bcc = new List<MailAddress>()
-            };
         }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error creating email message for notification type {NotificationType}", notificationType);
-            throw;
-        }
+        
+        logger.LogDebug("Added {RecipientCount} recipients to email message", 
+            emailMessage.To.Count + emailMessage.Cc.Count + emailMessage.Bcc.Count);
     }
 
-    private async Task<EmailSpecification?> GetEmailSpecificationAsync(NotificationType notificationType, CancellationToken cancellationToken)
-    {
-        try
+    /// <summary>
+    /// Creates an email message from the email specification and rendered content
+    /// </summary>
+    private static EmailMessage CreateEmailMessage(EmailSpecification emailSpec, string htmlBody, string? textBody = null) =>
+        new()
         {
-            var emailSpec = await emailSpecificationRepository.GetByNotificationTypeAsync(notificationType, cancellationToken);
-            if (emailSpec == null)
-            {
-                logger.LogError("Email specification not found for notification type {NotificationType}", notificationType);
-                throw new InvalidOperationException($"Email specification not found for notification type {notificationType}");
-            }
-
-            if (!emailSpec.IsActive)
-            {
-                logger.LogWarning("Email specification for notification type {NotificationType} is inactive", notificationType);
-            }
-
-            return emailSpec;
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error retrieving email specification for notification type {NotificationType}", notificationType);
-            throw;
-        }
-    }
+            From = new MailAddress(emailSpec.FromAddress, emailSpec.FromName),
+            ReplyTo = emailSpec.ReplyToAddress != null ? new MailAddress(emailSpec.ReplyToAddress) : null,
+            Subject = emailSpec.Subject,
+            HtmlBody = htmlBody,
+            TextBody = textBody ?? emailSpec.TextBody,
+            Priority = emailSpec.Priority,
+            To = new List<MailAddress>(),
+            Cc = new List<MailAddress>(),
+            Bcc = new List<MailAddress>()
+        };
 }

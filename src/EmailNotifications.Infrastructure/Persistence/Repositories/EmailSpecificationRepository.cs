@@ -6,9 +6,6 @@ using Microsoft.Extensions.Logging;
 
 namespace EmailNotifications.Infrastructure.Persistence.Repositories;
 
-/// <summary>
-/// Repository implementation for email specifications
-/// </summary>
 public class EmailSpecificationRepository(
     NotificationDbContext context,
     ILogger<EmailSpecificationRepository> logger)

@@ -1,8 +1,6 @@
-using EmailNotifications.Domain.Enums;
 using EmailNotifications.Infrastructure.Interfaces;
 using Microsoft.Extensions.Logging;
 using Scriban;
-using System.Text.Json;
 using Scriban.Runtime;
 
 namespace EmailNotifications.Infrastructure.Services;
@@ -13,82 +11,109 @@ namespace EmailNotifications.Infrastructure.Services;
 internal sealed class ScribanEmailTemplateRenderer : ITemplateRenderer
 {
     private readonly ILogger<ScribanEmailTemplateRenderer> _logger;
-    private readonly IEmailSpecificationRepository _emailSpecificationRepository;
     private readonly string _wrapperTemplate;
 
     public ScribanEmailTemplateRenderer(
-        ILogger<ScribanEmailTemplateRenderer> logger,
-        IEmailSpecificationRepository emailSpecificationRepository)
+        ILogger<ScribanEmailTemplateRenderer> logger)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _emailSpecificationRepository = emailSpecificationRepository ?? throw new ArgumentNullException(nameof(emailSpecificationRepository));
         _wrapperTemplate = LoadWrapperTemplate();
     }
 
-    public async Task<string> RenderAsync<TModel>(NotificationType notificationType, TModel model, CancellationToken cancellationToken = default) where TModel : class
+    /// <summary>
+    /// Starts the template rendering process
+    /// </summary>
+    public async Task<string> StartRenderingAsync<TModel>(string templateContent, TModel model, CancellationToken cancellationToken = default) where TModel : class
+    {
+        ArgumentNullException.ThrowIfNull(templateContent);
+        ArgumentNullException.ThrowIfNull(model);
+
+        _logger.LogDebug("Starting template rendering with model of type {ModelType}", typeof(TModel).Name);
+        
+        // First render the content template
+        var renderedContent = await RenderBodyContentAsync(templateContent, model, cancellationToken);
+        
+        // Then render the wrapper with the content
+        var result = await RenderWithWrapperAsync(renderedContent, cancellationToken);
+        
+        _logger.LogDebug("Template rendering completed successfully");
+        return result;
+    }
+
+    /// <summary>
+    /// Renders the body content of the template
+    /// </summary>
+    private async Task<string> RenderBodyContentAsync<TModel>(string templateContent, TModel model, CancellationToken cancellationToken) where TModel : class
     {
         try
         {
-            _logger.LogDebug("Starting template rendering for notification type: {NotificationType}", notificationType);
-
-            var emailSpec = await _emailSpecificationRepository.GetByNotificationTypeAsync(notificationType, cancellationToken);
-            if (emailSpec == null)
-            {
-                _logger.LogError("Email specification not found for notification type: {NotificationType}", notificationType);
-                throw new InvalidOperationException($"Email specification not found for notification type: {notificationType}");
-            }
-
-            _logger.LogDebug("Retrieved email specification {SpecificationName} for notification type: {NotificationType}",
-                emailSpec.Name, notificationType);
-
-            // Log the model data
-            var modelJson = JsonSerializer.Serialize(model);
-            _logger.LogDebug("Model data: {ModelData}", modelJson);
-
-            // First render the content template
-            var contentTemplate = Template.Parse(emailSpec.HtmlBody);
-            if (contentTemplate.HasErrors)
-            {
-                var errors = string.Join(", ", contentTemplate.Messages.Select(m => m.Message));
-                _logger.LogError("Content template parsing errors: {Errors}", errors);
-                throw new InvalidOperationException($"Content template parsing errors: {errors}");
-            }
-
-            // Create a script object and import the model
+            _logger.LogDebug("Parsing content template");
+            var contentTemplate = Template.Parse(templateContent);
+            
+            // Create script object for model binding
             var scriptObject = new ScriptObject();
-            scriptObject.Import(model);
-
+            
+            // Add each property of the model to the script object
+            foreach (var property in typeof(TModel).GetProperties())
+            {
+                var value = property.GetValue(model);
+                scriptObject.Add(property.Name, value);
+            }
+            
+            _logger.LogDebug("Rendering content template");
             var renderedContent = await contentTemplate.RenderAsync(scriptObject);
-            _logger.LogDebug("Rendered content: {Content}", renderedContent);
-
-            // Now render the wrapper template with the content
-            var wrapperTemplate = Template.Parse(_wrapperTemplate);
-            if (wrapperTemplate.HasErrors)
+            
+            if (string.IsNullOrEmpty(renderedContent))
             {
-                var errors = string.Join(", ", wrapperTemplate.Messages.Select(m => m.Message));
-                _logger.LogError("Wrapper template parsing errors: {Errors}", errors);
-                throw new InvalidOperationException($"Wrapper template parsing errors: {errors}");
+                _logger.LogWarning("Content template rendered an empty string");
             }
+            
+            return renderedContent;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error rendering content template");
+            throw;
+        }
+    }
 
-            // Create a new script object for the wrapper with the rendered content
+    /// <summary>
+    /// Renders the content within the wrapper template
+    /// </summary>
+    private async Task<string> RenderWithWrapperAsync(string bodyContent, CancellationToken cancellationToken)
+    {
+        try
+        {
+            _logger.LogDebug("Loading wrapper template");
+            var wrapperTemplateContent = _wrapperTemplate;
+            
+            if (string.IsNullOrEmpty(wrapperTemplateContent))
+            {
+                _logger.LogWarning("No wrapper template found, returning content as-is");
+                return bodyContent;
+            }
+            
+            _logger.LogDebug("Parsing wrapper template");
+            var wrapperTemplate = Template.Parse(wrapperTemplateContent);
+            
+            // Create script object for wrapper binding
             var wrapperScriptObject = new ScriptObject();
-            wrapperScriptObject.Import(model);
-            wrapperScriptObject["Content"] = renderedContent;
-
+            wrapperScriptObject.Add("body", bodyContent);
+            
+            _logger.LogDebug("Rendering with wrapper template");
             var result = await wrapperTemplate.RenderAsync(wrapperScriptObject);
-            _logger.LogDebug("Final rendered result: {Result}", result);
-
-            if (string.IsNullOrWhiteSpace(result))
+            
+            if (string.IsNullOrEmpty(result))
             {
-                _logger.LogWarning("Template rendered to empty string for notification type: {NotificationType}", notificationType);
+                _logger.LogWarning("Wrapper template rendered an empty string, returning original content");
+                return bodyContent;
             }
-
-            _logger.LogInformation("Successfully rendered template for notification type: {NotificationType}", notificationType);
+            
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error rendering template for notification type: {NotificationType}", notificationType);
+            _logger.LogError(ex, "Error rendering wrapper template");
             throw;
         }
     }

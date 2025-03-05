@@ -1,4 +1,4 @@
-using EmailNotifications.Application.Enums;
+using EmailNotifications.Domain.Enums;
 
 namespace EmailNotifications.Application.Models;
 
@@ -18,11 +18,5 @@ public static class NotificationTemplates
     {
         var model = new ResetPasswordTemplateModel(firstName, oneTimePassword, expiryTimeFormatted);
         return new NotificationRequest<ResetPasswordTemplateModel>(NotificationType.PasswordReset, model);
-    }
-
-    public static NotificationRequest<WelcomeTemplateModel> Welcome(string firstName)
-    {
-        var model = new WelcomeTemplateModel(firstName);
-        return new NotificationRequest<WelcomeTemplateModel>(NotificationType.Welcome, model);
     }
 }

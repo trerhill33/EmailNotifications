@@ -22,8 +22,4 @@
     <ProjectReference Include="..\EmailNotifications.Infrastructure\EmailNotifications.Infrastructure.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Models\" />
-  </ItemGroup>
-
 </Project>

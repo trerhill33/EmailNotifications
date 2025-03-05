@@ -1,4 +1,3 @@
-using EmailNotifications.Application.Enums;
 using EmailNotifications.Application.Interfaces;
 using EmailNotifications.Application.Models;
 using Microsoft.AspNetCore.Mvc;

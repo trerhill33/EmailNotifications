@@ -1,4 +1,4 @@
-using EmailNotifications.Application.Enums;
+using EmailNotifications.Domain.Enums;
 
 namespace EmailNotifications.Application.Models;
 
@@ -10,7 +10,6 @@ public interface INotificationRequest { }
 /// <summary>
 /// Represents a request to send a notification
 /// </summary>
-/// <typeparam name="T">The type of the template model</typeparam>
 public sealed record NotificationRequest<T>(
     NotificationType Type,
     T Data) : INotificationRequest where T : ITemplateModel;

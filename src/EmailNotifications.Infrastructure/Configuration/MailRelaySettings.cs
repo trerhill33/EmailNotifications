@@ -34,4 +34,14 @@ public class MailRelaySettings
     /// Gets or sets the sender's display name
     /// </summary>
     public required string SenderName { get; init; }
+
+    /// <summary>
+    /// Maximum number of retry attempts when sending fails with a transient error
+    /// </summary>
+    public int MaxRetryAttempts { get; init; } = 3;
+
+    /// <summary>
+    /// Initial delay between retry attempts in milliseconds
+    /// </summary>
+    public int RetryDelayMilliseconds { get; init; } = 1000;
 } 
