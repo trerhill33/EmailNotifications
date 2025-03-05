@@ -66,7 +66,6 @@ public class SmtpEmailSender : IEmailSender
             throw new EmailConfigurationException("Failed to configure SMTP client", ex);
         }
     }
-    
     public async Task SendEmailAsync(EmailMessage emailMessage, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(emailMessage);

@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using EmailNotifications.Infrastructure.Interfaces;
 using Microsoft.Extensions.Logging;
 using Scriban;
@@ -31,7 +32,7 @@ internal sealed class ScribanEmailTemplateRenderer : ITemplateRenderer
         _logger.LogDebug("Starting template rendering with model of type {ModelType}", typeof(TModel).Name);
         
         // First render the content template
-        var renderedContent = await RenderBodyContentAsync(templateContent, model, cancellationToken);
+        var renderedContent = await RenderBodyContentAsync(templateContent, model);
         
         // Then render the wrapper with the content
         var result = await RenderWithWrapperAsync(renderedContent, cancellationToken);
@@ -43,10 +44,12 @@ internal sealed class ScribanEmailTemplateRenderer : ITemplateRenderer
     /// <summary>
     /// Renders the body content of the template
     /// </summary>
-    private async Task<string> RenderBodyContentAsync<TModel>(string templateContent, TModel model, CancellationToken cancellationToken) where TModel : class
+    private async Task<string> RenderBodyContentAsync<TModel>(string templateContent, TModel model) where TModel : class
     {
         try
         {
+            _logger.LogDebug("Template content: {TemplateContent}", templateContent);
+            
             _logger.LogDebug("Parsing content template");
             var contentTemplate = Template.Parse(templateContent);
             
@@ -57,11 +60,28 @@ internal sealed class ScribanEmailTemplateRenderer : ITemplateRenderer
             foreach (var property in typeof(TModel).GetProperties())
             {
                 var value = property.GetValue(model);
+                string propertyName = property.Name;
+                
+                // Convert property name to snake_case for Scriban
+                propertyName = Regex.Replace(
+                    propertyName, 
+                    "(?<!^)([A-Z][a-z]|(?<=[a-z])[A-Z])", 
+                    "_$1"
+                ).ToLower();
+                
+                _logger.LogDebug("Adding model property: {PropertyName} = {@PropertyValue}", propertyName, value);
+                scriptObject.Add(propertyName, value);
+                
+                // Also add with original property name for backward compatibility
                 scriptObject.Add(property.Name, value);
             }
             
-            _logger.LogDebug("Rendering content template");
+            _logger.LogDebug("Rendering content template with model properties: {@Properties}", 
+                typeof(TModel).GetProperties().Select(p => p.Name));
+            
             var renderedContent = await contentTemplate.RenderAsync(scriptObject);
+            
+            _logger.LogDebug("Rendered content: {RenderedContent}", renderedContent);
             
             if (string.IsNullOrEmpty(renderedContent))
             {
@@ -93,23 +113,27 @@ internal sealed class ScribanEmailTemplateRenderer : ITemplateRenderer
                 return bodyContent;
             }
             
+            _logger.LogDebug("Wrapper template content: {WrapperTemplate}", wrapperTemplateContent);
+            
             _logger.LogDebug("Parsing wrapper template");
             var wrapperTemplate = Template.Parse(wrapperTemplateContent);
             
             // Create script object for wrapper binding
             var wrapperScriptObject = new ScriptObject();
-            wrapperScriptObject.Add("body", bodyContent);
+            
+            // Add body content with multiple common template variable names
+            _logger.LogDebug("Adding body content to template variables");
+            wrapperScriptObject.Add("Content", bodyContent);
             
             _logger.LogDebug("Rendering with wrapper template");
             var result = await wrapperTemplate.RenderAsync(wrapperScriptObject);
             
-            if (string.IsNullOrEmpty(result))
-            {
-                _logger.LogWarning("Wrapper template rendered an empty string, returning original content");
-                return bodyContent;
-            }
-            
-            return result;
+            _logger.LogDebug("Final rendered result: {Result}", result);
+
+            if (!string.IsNullOrEmpty(result)) return result;
+            _logger.LogWarning("Wrapper template rendered an empty string, returning original content");
+            return bodyContent;
+
         }
         catch (Exception ex)
         {
