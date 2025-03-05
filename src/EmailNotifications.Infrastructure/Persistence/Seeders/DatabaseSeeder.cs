@@ -1,11 +1,12 @@
 using EmailNotifications.Domain.Entities;
 using EmailNotifications.Domain.Enums;
+using EmailNotifications.Infrastructure.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 namespace EmailNotifications.Infrastructure.Persistence.Seeders;
 
-public class DatabaseSeeder(NotificationDbContext context, ILogger<DatabaseSeeder> logger)
+public class DatabaseSeeder(NotificationDbContext context, ILogger<DatabaseSeeder> logger, IEmailSpecificationRepository specificationRepository)
 {
     public async Task SeedAsync(CancellationToken cancellationToken = default)
     {
@@ -32,7 +33,7 @@ public class DatabaseSeeder(NotificationDbContext context, ILogger<DatabaseSeede
                     HtmlBody = @"
                         <div class='content'>
                             <h1>Welcome to Our Platform!</h1>
-                            <p>Dear {{ UserName }},</p>
+                            <p>Dear {{ first_name }} {{ last_name }},</p>
                             <p>Thank you for joining our platform. We're excited to have you on board!</p>
                             <p>Your account has been successfully created.</p>
                             <p>Best regards,<br>The Team</p>
@@ -40,7 +41,7 @@ public class DatabaseSeeder(NotificationDbContext context, ILogger<DatabaseSeede
                     TextBody = @"
                         Welcome to Our Platform!
 
-                        Dear {{ UserName }},
+                        Dear {{ first_name }} {{ last_name }},
 
                         Thank you for joining our platform. We're excited to have you on board!
 
@@ -62,10 +63,10 @@ public class DatabaseSeeder(NotificationDbContext context, ILogger<DatabaseSeede
                     HtmlBody = @"
                         <div class='content'>
                             <h1>Password Reset Request</h1>
-                            <p>Dear {{ UserName }},</p>
+                            <p>Dear {{ first_name }} {{ last_name }},</p>
                             <p>We received a request to reset your password. Click the button below to proceed:</p>
                             <p style='text-align: center;'>
-                                <a href='{{ ResetLink }}' class='button'>Reset Password</a>
+                                <a href='{{ reset_link }}' class='button'>Reset Password</a>
                             </p>
                             <p>If you didn't request this, please ignore this email.</p>
                             <p>Best regards,<br>The Team</p>
@@ -73,11 +74,11 @@ public class DatabaseSeeder(NotificationDbContext context, ILogger<DatabaseSeede
                     TextBody = @"
                         Password Reset Request
 
-                        Dear {{ UserName }},
+                        Dear {{ first_name }} {{ last_name }},
 
                         We received a request to reset your password. Click the link below to proceed:
 
-                        {{ ResetLink }}
+                        {{ reset_link }}
 
                         If you didn't request this, please ignore this email.
 
@@ -97,7 +98,7 @@ public class DatabaseSeeder(NotificationDbContext context, ILogger<DatabaseSeede
                     HtmlBody = @"
                         <div class='content'>
                             <h1>Welcome to Our Community!</h1>
-                            <p>Dear {{ UserName }},</p>
+                            <p>Dear {{ first_name }} {{ last_name }},</p>
                             <p>Welcome to our community! We're thrilled to have you join us.</p>
                             <p>Here are some things you can do to get started:</p>
                             <ul class='list'>
@@ -111,7 +112,7 @@ public class DatabaseSeeder(NotificationDbContext context, ILogger<DatabaseSeede
                     TextBody = @"
                         Welcome to Our Community!
 
-                        Dear {{ UserName }},
+                        Dear {{ first_name }} {{ last_name }},
 
                         Welcome to our community! We're thrilled to have you join us.
 
@@ -194,5 +195,60 @@ public class DatabaseSeeder(NotificationDbContext context, ILogger<DatabaseSeede
             logger.LogError(ex, "Error seeding database");
             throw;
         }
+    }
+
+    public async Task SeedWelcomeAndPasswordResetTemplates()
+    {
+        var welcomeTemplate = new EmailSpecification
+        {
+            Id = Guid.NewGuid(),
+            Name = "Welcome Email",
+            NotificationType = NotificationType.Welcome,
+            Subject = "Welcome to Our Platform!",
+            HtmlBody = @"<div class='content'>
+                <h1>Welcome to Our Platform!</h1>
+                <p>Dear {{ first_name }} {{ last_name }},</p>
+                <p>Thank you for joining our platform. We're excited to have you on board!</p>
+                <p>Your account has been successfully created on {{ formatted_date }}.</p>
+                <p>Best regards,<br>The Team</p>
+            </div>",
+            TextBody = "Welcome to Our Platform!\n\nDear {{ first_name }} {{ last_name }},\n\nThank you for joining our platform. We're excited to have you on board!\n\nYour account has been successfully created on {{ formatted_date }}.\n\nBest regards,\nThe Team",
+            FromAddress = "noreply@example.com",
+            FromName = "Our Platform",
+            Priority = 3,
+            IsActive = true,
+            CreatedAt = DateTime.UtcNow,
+            CreatedBy = "System",
+            LastModifiedAt = DateTime.UtcNow,
+            LastModifiedBy = "System"
+        };
+
+        var passwordResetTemplate = new EmailSpecification
+        {
+            Id = Guid.NewGuid(),
+            Name = "Password Reset",
+            NotificationType = NotificationType.PasswordReset,
+            Subject = "Password Reset Request",
+            HtmlBody = @"<div class='content'>
+                <h1>Password Reset Request</h1>
+                <p>Dear {{ first_name }},</p>
+                <p>We received a request to reset your password. Your one-time password is: {{ one_time_password }}</p>
+                <p>This password will expire at: {{ expiry_time_formatted }}</p>
+                <p>If you didn't request this, please ignore this email.</p>
+                <p>Best regards,<br>The Team</p>
+            </div>",
+            TextBody = "Password Reset Request\n\nDear {{ first_name }},\n\nWe received a request to reset your password. Your one-time password is: {{ one_time_password }}\n\nThis password will expire at: {{ expiry_time_formatted }}\n\nIf you didn't request this, please ignore this email.\n\nBest regards,\nThe Team",
+            FromAddress = "noreply@example.com",
+            FromName = "Our Platform",
+            Priority = 1,
+            IsActive = true,
+            CreatedAt = DateTime.UtcNow,
+            CreatedBy = "System",
+            LastModifiedAt = DateTime.UtcNow,
+            LastModifiedBy = "System"
+        };
+
+        await specificationRepository.AddAsync(welcomeTemplate);
+        await specificationRepository.AddAsync(passwordResetTemplate);
     }
 } 

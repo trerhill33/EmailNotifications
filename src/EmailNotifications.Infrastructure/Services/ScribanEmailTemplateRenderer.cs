@@ -1,10 +1,9 @@
-using System.Collections.Concurrent;
-using System.Security.Cryptography;
-using System.Text;
 using EmailNotifications.Domain.Enums;
 using EmailNotifications.Infrastructure.Interfaces;
 using Microsoft.Extensions.Logging;
 using Scriban;
+using System.Text.Json;
+using Scriban.Runtime;
 
 namespace EmailNotifications.Infrastructure.Services;
 
@@ -16,7 +15,6 @@ internal sealed class ScribanEmailTemplateRenderer : ITemplateRenderer
     private readonly ILogger<ScribanEmailTemplateRenderer> _logger;
     private readonly IEmailSpecificationRepository _emailSpecificationRepository;
     private readonly string _wrapperTemplate;
-    private readonly ConcurrentDictionary<string, Template> _templateCache = new();
 
     public ScribanEmailTemplateRenderer(
         ILogger<ScribanEmailTemplateRenderer> logger,
@@ -43,22 +41,43 @@ internal sealed class ScribanEmailTemplateRenderer : ITemplateRenderer
             _logger.LogDebug("Retrieved email specification {SpecificationName} for notification type: {NotificationType}",
                 emailSpec.Name, notificationType);
 
-            var template = _templateCache.GetOrAdd(
-                GetTemplateKey(emailSpec.HtmlBody),
-                key =>
-                {
-                    _logger.LogDebug("Parsing and caching template for specification {SpecificationName}", emailSpec.Name);
-                    return Template.Parse(emailSpec.HtmlBody);
-                });
+            // Log the model data
+            var modelJson = JsonSerializer.Serialize(model);
+            _logger.LogDebug("Model data: {ModelData}", modelJson);
 
-            if (template.HasErrors)
+            // First render the content template
+            var contentTemplate = Template.Parse(emailSpec.HtmlBody);
+            if (contentTemplate.HasErrors)
             {
-                var errors = string.Join(", ", template.Messages.Select(m => m.Message));
-                _logger.LogError("Template parsing errors: {Errors}", errors);
-                throw new InvalidOperationException($"Template parsing errors: {errors}");
+                var errors = string.Join(", ", contentTemplate.Messages.Select(m => m.Message));
+                _logger.LogError("Content template parsing errors: {Errors}", errors);
+                throw new InvalidOperationException($"Content template parsing errors: {errors}");
             }
 
-            var result = await template.RenderAsync(new { model });
+            // Create a script object and import the model
+            var scriptObject = new ScriptObject();
+            scriptObject.Import(model);
+
+            var renderedContent = await contentTemplate.RenderAsync(scriptObject);
+            _logger.LogDebug("Rendered content: {Content}", renderedContent);
+
+            // Now render the wrapper template with the content
+            var wrapperTemplate = Template.Parse(_wrapperTemplate);
+            if (wrapperTemplate.HasErrors)
+            {
+                var errors = string.Join(", ", wrapperTemplate.Messages.Select(m => m.Message));
+                _logger.LogError("Wrapper template parsing errors: {Errors}", errors);
+                throw new InvalidOperationException($"Wrapper template parsing errors: {errors}");
+            }
+
+            // Create a new script object for the wrapper with the rendered content
+            var wrapperScriptObject = new ScriptObject();
+            wrapperScriptObject.Import(model);
+            wrapperScriptObject["Content"] = renderedContent;
+
+            var result = await wrapperTemplate.RenderAsync(wrapperScriptObject);
+            _logger.LogDebug("Final rendered result: {Result}", result);
+
             if (string.IsNullOrWhiteSpace(result))
             {
                 _logger.LogWarning("Template rendered to empty string for notification type: {NotificationType}", notificationType);
@@ -72,13 +91,6 @@ internal sealed class ScribanEmailTemplateRenderer : ITemplateRenderer
             _logger.LogError(ex, "Error rendering template for notification type: {NotificationType}", notificationType);
             throw;
         }
-    }
-
-    private static string GetTemplateKey(string template)
-    {
-        using var sha256 = SHA256.Create();
-        var hash = sha256.ComputeHash(Encoding.UTF8.GetBytes(template));
-        return Convert.ToBase64String(hash);
     }
 
     private string LoadWrapperTemplate()
