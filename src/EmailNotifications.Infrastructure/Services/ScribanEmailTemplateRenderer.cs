@@ -1,4 +1,3 @@
-using System.Text.RegularExpressions;
 using EmailNotifications.Infrastructure.Interfaces;
 using Microsoft.Extensions.Logging;
 using Scriban;
@@ -32,7 +31,7 @@ internal sealed class ScribanEmailTemplateRenderer : ITemplateRenderer
         _logger.LogDebug("Starting template rendering with model of type {ModelType}", typeof(TModel).Name);
         
         // First render the content template
-        var renderedContent = await RenderBodyContentAsync(templateContent, model);
+        var renderedContent = await RenderBodyContentAsync(templateContent, model, cancellationToken);
         
         // Then render the wrapper with the content
         var result = await RenderWithWrapperAsync(renderedContent, cancellationToken);
@@ -44,7 +43,7 @@ internal sealed class ScribanEmailTemplateRenderer : ITemplateRenderer
     /// <summary>
     /// Renders the body content of the template
     /// </summary>
-    private async Task<string> RenderBodyContentAsync<TModel>(string templateContent, TModel model) where TModel : class
+    private async Task<string> RenderBodyContentAsync<TModel>(string templateContent, TModel model, CancellationToken cancellationToken) where TModel : class
     {
         try
         {
@@ -63,7 +62,7 @@ internal sealed class ScribanEmailTemplateRenderer : ITemplateRenderer
                 string propertyName = property.Name;
                 
                 // Convert property name to snake_case for Scriban
-                propertyName = Regex.Replace(
+                propertyName = System.Text.RegularExpressions.Regex.Replace(
                     propertyName, 
                     "(?<!^)([A-Z][a-z]|(?<=[a-z])[A-Z])", 
                     "_$1"
@@ -113,27 +112,23 @@ internal sealed class ScribanEmailTemplateRenderer : ITemplateRenderer
                 return bodyContent;
             }
             
-            _logger.LogDebug("Wrapper template content: {WrapperTemplate}", wrapperTemplateContent);
-            
             _logger.LogDebug("Parsing wrapper template");
             var wrapperTemplate = Template.Parse(wrapperTemplateContent);
             
             // Create script object for wrapper binding
             var wrapperScriptObject = new ScriptObject();
-            
-            // Add body content with multiple common template variable names
-            _logger.LogDebug("Adding body content to template variables");
-            wrapperScriptObject.Add("Content", bodyContent);
+            wrapperScriptObject.Add("body", bodyContent);
             
             _logger.LogDebug("Rendering with wrapper template");
             var result = await wrapperTemplate.RenderAsync(wrapperScriptObject);
             
-            _logger.LogDebug("Final rendered result: {Result}", result);
-
-            if (!string.IsNullOrEmpty(result)) return result;
-            _logger.LogWarning("Wrapper template rendered an empty string, returning original content");
-            return bodyContent;
-
+            if (string.IsNullOrEmpty(result))
+            {
+                _logger.LogWarning("Wrapper template rendered an empty string, returning original content");
+                return bodyContent;
+            }
+            
+            return result;
         }
         catch (Exception ex)
         {

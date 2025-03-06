@@ -1,4 +1,6 @@
-namespace EmailNotifications.Domain.Common;
+using System;
+
+namespace EmailNotifications.Domain;
 
 /// <summary>
 /// Base class for all auditable entities in the system
@@ -6,14 +8,14 @@ namespace EmailNotifications.Domain.Common;
 public abstract class AuditableEntity
 {
     /// <summary>
-    /// Unique identifier for the entity
+    /// The unique identifier for the entity
     /// </summary>
-    public Guid Id { get; set; }
+    public int Id { get; set; }
 
     /// <summary>
-    /// Date and time when the entity was created
+    /// The date and time when the entity was created
     /// </summary>
-    public DateTime CreatedAt { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     /// <summary>
     /// User who created the entity
@@ -21,9 +23,9 @@ public abstract class AuditableEntity
     public string? CreatedBy { get; set; }
 
     /// <summary>
-    /// Date and time when the entity was last modified
+    /// The date and time when the entity was last modified
     /// </summary>
-    public DateTime? LastModifiedAt { get; set; }
+    public DateTime LastModifiedAt { get; set; } = DateTime.UtcNow;
 
     /// <summary>
     /// User who last modified the entity

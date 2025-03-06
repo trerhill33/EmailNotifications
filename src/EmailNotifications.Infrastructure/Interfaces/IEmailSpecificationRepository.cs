@@ -16,6 +16,14 @@ public interface IEmailSpecificationRepository
     Task<IEnumerable<EmailSpecification>> GetAllAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Gets an email specification by ID with all related entities
+    /// </summary>
+    /// <param name="id">The ID of the email specification</param>
+    /// <param name="cancellationToken">The cancellation token</param>
+    /// <returns>The email specification if found, null otherwise</returns>
+    Task<EmailSpecification?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Gets an email specification by notification type with all related entities
     /// </summary>
     /// <param name="notificationType">The notification type to find the specification for</param>
@@ -44,7 +52,7 @@ public interface IEmailSpecificationRepository
     /// </summary>
     /// <param name="id">The ID of the email specification to delete</param>
     /// <param name="cancellationToken">The cancellation token</param>
-    Task DeleteAsync(Guid id, CancellationToken cancellationToken = default);
+    Task DeleteAsync(int id, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets all recipients for a specification's email group
@@ -52,7 +60,7 @@ public interface IEmailSpecificationRepository
     /// <param name="specificationId">The ID of the email specification</param>
     /// <param name="cancellationToken">The cancellation token</param>
     /// <returns>A list of all recipients in the group</returns>
-    Task<IEnumerable<EmailRecipient>> GetRecipientsAsync(Guid specificationId, CancellationToken cancellationToken = default);
+    Task<IEnumerable<EmailRecipient>> GetRecipientsAsync(int specificationId, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Adds a recipient to a specification's email group
@@ -61,7 +69,7 @@ public interface IEmailSpecificationRepository
     /// <param name="recipient">The recipient to add</param>
     /// <param name="cancellationToken">The cancellation token</param>
     /// <returns>The added recipient</returns>
-    Task<EmailRecipient> AddRecipientAsync(Guid specificationId, EmailRecipient recipient, CancellationToken cancellationToken = default);
+    Task<EmailRecipient> AddRecipientAsync(int specificationId, EmailRecipient recipient, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Updates a recipient in a specification's email group
@@ -70,7 +78,7 @@ public interface IEmailSpecificationRepository
     /// <param name="recipient">The recipient to update</param>
     /// <param name="cancellationToken">The cancellation token</param>
     /// <returns>The updated recipient</returns>
-    Task<EmailRecipient> UpdateRecipientAsync(Guid specificationId, EmailRecipient recipient, CancellationToken cancellationToken = default);
+    Task<EmailRecipient> UpdateRecipientAsync(int specificationId, EmailRecipient recipient, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Deletes a recipient from a specification's email group
@@ -78,5 +86,5 @@ public interface IEmailSpecificationRepository
     /// <param name="specificationId">The ID of the email specification</param>
     /// <param name="email">The email of the recipient to delete</param>
     /// <param name="cancellationToken">The cancellation token</param>
-    Task DeleteRecipientAsync(Guid specificationId, string email, CancellationToken cancellationToken = default);
+    Task DeleteRecipientAsync(int specificationId, string email, CancellationToken cancellationToken = default);
 }

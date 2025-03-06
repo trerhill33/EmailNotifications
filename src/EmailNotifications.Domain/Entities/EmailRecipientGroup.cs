@@ -1,5 +1,3 @@
-using EmailNotifications.Domain.Common;
-
 namespace EmailNotifications.Domain.Entities;
 
 /// <summary>
@@ -18,12 +16,12 @@ public sealed class EmailRecipientGroup : AuditableEntity
     public string? Description { get; set; }
 
     /// <summary>
-    /// The ID of the email specification this group is associated with
+    /// The ID of the email specification this group belongs to
     /// </summary>
-    public Guid EmailSpecificationId { get; set; }
+    public int EmailSpecificationId { get; set; }
 
     /// <summary>
-    /// The email specification this group is associated with
+    /// The email specification this group belongs to
     /// </summary>
     public EmailSpecification? EmailSpecification { get; set; }
 

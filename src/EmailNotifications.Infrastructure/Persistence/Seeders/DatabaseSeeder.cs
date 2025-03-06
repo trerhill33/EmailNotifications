@@ -26,7 +26,6 @@ public class DatabaseSeeder(NotificationDbContext context, ILogger<DatabaseSeede
             {
                 new EmailSpecification
                 {
-                    Id = Guid.NewGuid(),
                     NotificationType = NotificationType.NewUser,
                     Name = "New User Notification",
                     Subject = "Welcome to Our Platform",
@@ -56,7 +55,6 @@ public class DatabaseSeeder(NotificationDbContext context, ILogger<DatabaseSeede
                 },
                 new EmailSpecification
                 {
-                    Id = Guid.NewGuid(),
                     NotificationType = NotificationType.PasswordReset,
                     Name = "Password Reset Notification",
                     Subject = "Password Reset Request",
@@ -91,7 +89,6 @@ public class DatabaseSeeder(NotificationDbContext context, ILogger<DatabaseSeede
                 },
                 new EmailSpecification
                 {
-                    Id = Guid.NewGuid(),
                     NotificationType = NotificationType.Welcome,
                     Name = "Welcome Email",
                     Subject = "Welcome to Our Community!",
@@ -133,13 +130,13 @@ public class DatabaseSeeder(NotificationDbContext context, ILogger<DatabaseSeede
             };
 
             await context.EmailSpecifications.AddRangeAsync(emailSpecifications, cancellationToken);
+            await context.SaveChangesAsync(cancellationToken);
 
             // Create email groups for each specification
             foreach (var spec in emailSpecifications)
             {
                 var adminGroup = new EmailRecipientGroup
                 {
-                    Id = Guid.NewGuid(),
                     Name = "Administrators",
                     Description = "System administrators",
                     EmailSpecificationId = spec.Id,
@@ -148,7 +145,6 @@ public class DatabaseSeeder(NotificationDbContext context, ILogger<DatabaseSeede
 
                 var supportGroup = new EmailRecipientGroup
                 {
-                    Id = Guid.NewGuid(),
                     Name = "Support Team",
                     Description = "Customer support team",
                     EmailSpecificationId = spec.Id,
@@ -156,13 +152,13 @@ public class DatabaseSeeder(NotificationDbContext context, ILogger<DatabaseSeede
                 };
 
                 await context.EmailRecipientGroups.AddRangeAsync(new[] { adminGroup, supportGroup }, cancellationToken);
+                await context.SaveChangesAsync(cancellationToken);
 
                 // Add recipients to groups
                 var adminRecipients = new[]
                 {
                     new EmailRecipient
                     {
-                        Id = Guid.NewGuid(),
                         EmailAddress = "admin@example.com",
                         DisplayName = "System Administrator",
                         Type = RecipientType.To,
@@ -175,7 +171,6 @@ public class DatabaseSeeder(NotificationDbContext context, ILogger<DatabaseSeede
                 {
                     new EmailRecipient
                     {
-                        Id = Guid.NewGuid(),
                         EmailAddress = "support@example.com",
                         DisplayName = "Support Team",
                         Type = RecipientType.To,
@@ -201,7 +196,6 @@ public class DatabaseSeeder(NotificationDbContext context, ILogger<DatabaseSeede
     {
         var welcomeTemplate = new EmailSpecification
         {
-            Id = Guid.NewGuid(),
             Name = "Welcome Email",
             NotificationType = NotificationType.Welcome,
             Subject = "Welcome to Our Platform!",
@@ -225,7 +219,6 @@ public class DatabaseSeeder(NotificationDbContext context, ILogger<DatabaseSeede
 
         var passwordResetTemplate = new EmailSpecification
         {
-            Id = Guid.NewGuid(),
             Name = "Password Reset",
             NotificationType = NotificationType.PasswordReset,
             Subject = "Password Reset Request",
@@ -248,7 +241,18 @@ public class DatabaseSeeder(NotificationDbContext context, ILogger<DatabaseSeede
             LastModifiedBy = "System"
         };
 
-        await specificationRepository.AddAsync(welcomeTemplate);
-        await specificationRepository.AddAsync(passwordResetTemplate);
+        // Check if templates already exist
+        var existingWelcomeTemplate = await specificationRepository.GetByNotificationTypeAsync(NotificationType.Welcome);
+        var existingPasswordResetTemplate = await specificationRepository.GetByNotificationTypeAsync(NotificationType.PasswordReset);
+
+        if (existingWelcomeTemplate == null)
+        {
+            await specificationRepository.AddAsync(welcomeTemplate);
+        }
+
+        if (existingPasswordResetTemplate == null)
+        {
+            await specificationRepository.AddAsync(passwordResetTemplate);
+        }
     }
 } 

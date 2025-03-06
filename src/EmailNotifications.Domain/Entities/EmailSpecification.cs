@@ -1,4 +1,3 @@
-using EmailNotifications.Domain.Common;
 using EmailNotifications.Domain.Enums;
 
 namespace EmailNotifications.Domain.Entities;

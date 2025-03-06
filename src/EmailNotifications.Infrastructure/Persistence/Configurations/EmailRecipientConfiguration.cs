@@ -17,32 +17,39 @@ public class EmailRecipientConfiguration : IEntityTypeConfiguration<EmailRecipie
     {
         builder.ToTable("EmailRecipients");
 
-        builder.HasKey(e => e.Id);
+        builder.HasKey(r => r.Id);
+        
+        builder.Property(r => r.Id)
+            .IsRequired()
+            .ValueGeneratedOnAdd();
 
-        builder.Property(e => e.EmailAddress)
+        builder.Property(r => r.EmailAddress)
+            .IsRequired()
+            .HasMaxLength(255);
+
+        builder.Property(r => r.DisplayName)
+            .HasMaxLength(100);
+
+        builder.Property(r => r.Type)
             .IsRequired();
 
-        builder.Property(e => e.DisplayName);
-
-        builder.Property(e => e.Type)
+        builder.Property(r => r.EmailRecipientGroupId)
             .IsRequired();
 
-        builder.Property(e => e.EmailRecipientGroupId)
+        builder.Property(r => r.CreatedAt)
             .IsRequired();
 
-        builder.Property(e => e.CreatedAt)
+        builder.Property(r => r.CreatedBy);
+
+        builder.Property(r => r.LastModifiedAt)
             .IsRequired();
 
-        builder.Property(e => e.CreatedBy);
+        builder.Property(r => r.LastModifiedBy);
 
-        builder.Property(e => e.LastModifiedAt);
-
-        builder.Property(e => e.LastModifiedBy);
-
-        // Relationship with EmailRecipientGroup
-        builder.HasOne(e => e.EmailRecipientGroup)
-            .WithMany(e => e.Recipients)
-            .HasForeignKey(e => e.EmailRecipientGroupId)
+        // Configure many-to-one relationship with EmailRecipientGroup
+        builder.HasOne(r => r.EmailRecipientGroup)
+            .WithMany(g => g.Recipients)
+            .HasForeignKey(r => r.EmailRecipientGroupId)
             .OnDelete(DeleteBehavior.Cascade);
 
         // Indexes for better query performance

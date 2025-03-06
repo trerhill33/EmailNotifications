@@ -28,6 +28,22 @@ public class EmailSpecificationRepository(
         }
     }
 
+    public async Task<EmailSpecification?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            return await context.EmailSpecifications
+                .Include(x => x.RecipientGroups)
+                    .ThenInclude(g => g.Recipients)
+                .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error retrieving email specification with ID {Id}", id);
+            throw;
+        }
+    }
+
     public async Task<EmailSpecification?> GetByNotificationTypeAsync(NotificationType notificationType, CancellationToken cancellationToken = default)
     {
         try
@@ -95,7 +111,7 @@ public class EmailSpecificationRepository(
         }
     }
 
-    public async Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)
+    public async Task DeleteAsync(int id, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -118,7 +134,7 @@ public class EmailSpecificationRepository(
         }
     }
     
-    public async Task<IEnumerable<EmailRecipient>> GetRecipientsAsync(Guid specificationId, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<EmailRecipient>> GetRecipientsAsync(int specificationId, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -132,13 +148,13 @@ public class EmailSpecificationRepository(
                 throw new InvalidOperationException($"Email specification with ID {specificationId} not found");
             }
 
-            var group = specification.RecipientGroups.FirstOrDefault();
-            if (group == null)
+            var recipients = new List<EmailRecipient>();
+            foreach (var group in specification.RecipientGroups)
             {
-                throw new InvalidOperationException($"No recipient group found for specification {specificationId}");
+                recipients.AddRange(group.Recipients);
             }
 
-            return group.Recipients;
+            return recipients;
         }
         catch (Exception ex)
         {
@@ -147,7 +163,7 @@ public class EmailSpecificationRepository(
         }
     }
 
-    public async Task<EmailRecipient> AddRecipientAsync(Guid specificationId, EmailRecipient recipient, CancellationToken cancellationToken = default)
+    public async Task<EmailRecipient> AddRecipientAsync(int specificationId, EmailRecipient recipient, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -164,7 +180,14 @@ public class EmailSpecificationRepository(
             var group = specification.RecipientGroups.FirstOrDefault();
             if (group == null)
             {
-                throw new InvalidOperationException($"No recipient group found for specification {specificationId}");
+                group = new EmailRecipientGroup
+                {
+                    Name = "Default",
+                    CreatedAt = DateTime.UtcNow,
+                    LastModifiedAt = DateTime.UtcNow,
+                    Recipients = new List<EmailRecipient>()
+                };
+                specification.RecipientGroups.Add(group);
             }
 
             // Check for duplicate email
@@ -173,7 +196,6 @@ public class EmailSpecificationRepository(
                 throw new InvalidOperationException($"Recipient with email {recipient.EmailAddress} already exists in the group");
             }
 
-            recipient.Id = Guid.NewGuid();
             recipient.CreatedAt = DateTime.UtcNow;
             recipient.LastModifiedAt = DateTime.UtcNow;
             group.Recipients.Add(recipient);
@@ -188,7 +210,7 @@ public class EmailSpecificationRepository(
         }
     }
 
-    public async Task<EmailRecipient> UpdateRecipientAsync(Guid specificationId, EmailRecipient recipient, CancellationToken cancellationToken = default)
+    public async Task<EmailRecipient> UpdateRecipientAsync(int specificationId, EmailRecipient recipient, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -202,23 +224,17 @@ public class EmailSpecificationRepository(
                 throw new InvalidOperationException($"Email specification with ID {specificationId} not found");
             }
 
-            var group = specification.RecipientGroups.FirstOrDefault();
-            if (group == null)
+            EmailRecipient? existingRecipient = null;
+            foreach (var group in specification.RecipientGroups)
             {
-                throw new InvalidOperationException($"No recipient group found for specification {specificationId}");
+                existingRecipient = group.Recipients.FirstOrDefault(r => r.Id == recipient.Id);
+                if (existingRecipient != null)
+                    break;
             }
 
-            var existingRecipient = group.Recipients.FirstOrDefault(r => r.Id == recipient.Id);
             if (existingRecipient == null)
             {
-                throw new InvalidOperationException($"Recipient with ID {recipient.Id} not found in the group");
-            }
-
-            // If email is changing, check for duplicates
-            if (!existingRecipient.EmailAddress.Equals(recipient.EmailAddress, StringComparison.OrdinalIgnoreCase) &&
-                group.Recipients.Any(r => r.EmailAddress.Equals(recipient.EmailAddress, StringComparison.OrdinalIgnoreCase)))
-            {
-                throw new InvalidOperationException($"Recipient with email {recipient.EmailAddress} already exists in the group");
+                throw new InvalidOperationException($"Recipient with ID {recipient.Id} not found in specification {specificationId}");
             }
 
             // Update recipient properties
@@ -237,7 +253,7 @@ public class EmailSpecificationRepository(
         }
     }
 
-    public async Task DeleteRecipientAsync(Guid specificationId, string email, CancellationToken cancellationToken = default)
+    public async Task DeleteRecipientAsync(int specificationId, string email, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -251,19 +267,25 @@ public class EmailSpecificationRepository(
                 throw new InvalidOperationException($"Email specification with ID {specificationId} not found");
             }
 
-            var group = specification.RecipientGroups.FirstOrDefault();
-            if (group == null)
+            EmailRecipient? recipientToRemove = null;
+            EmailRecipientGroup? groupWithRecipient = null;
+
+            foreach (var group in specification.RecipientGroups)
             {
-                throw new InvalidOperationException($"No recipient group found for specification {specificationId}");
+                recipientToRemove = group.Recipients.FirstOrDefault(r => r.EmailAddress.Equals(email, StringComparison.OrdinalIgnoreCase));
+                if (recipientToRemove != null)
+                {
+                    groupWithRecipient = group;
+                    break;
+                }
             }
 
-            var recipient = group.Recipients.FirstOrDefault(r => r.EmailAddress.Equals(email, StringComparison.OrdinalIgnoreCase));
-            if (recipient == null)
+            if (recipientToRemove == null || groupWithRecipient == null)
             {
-                throw new InvalidOperationException($"Recipient with email {email} not found in the group");
+                throw new InvalidOperationException($"Recipient with email {email} not found in specification {specificationId}");
             }
 
-            group.Recipients.Remove(recipient);
+            groupWithRecipient.Recipients.Remove(recipientToRemove);
             await context.SaveChangesAsync(cancellationToken);
         }
         catch (Exception ex)

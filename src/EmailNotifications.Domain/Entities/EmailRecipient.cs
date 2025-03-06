@@ -1,4 +1,3 @@
-using EmailNotifications.Domain.Common;
 using EmailNotifications.Domain.Enums;
 
 namespace EmailNotifications.Domain.Entities;
@@ -26,7 +25,7 @@ public sealed class EmailRecipient : AuditableEntity
     /// <summary>
     /// The ID of the recipient group this recipient belongs to
     /// </summary>
-    public Guid EmailRecipientGroupId { get; set; }
+    public int EmailRecipientGroupId { get; set; }
 
     /// <summary>
     /// The recipient group this recipient belongs to
