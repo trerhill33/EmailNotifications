@@ -52,6 +52,13 @@ public class NotificationService(
             logger.LogDebug("Adding recipients for email specification {Id}", emailSpec.Id);
             AddRecipients(emailMessage, emailSpec);
             
+            // Step 5: Add attachments if any
+            if (request.Attachments.Count > 0)
+            {
+                logger.LogDebug("Adding {AttachmentCount} attachments to email message", request.Attachments.Count);
+                emailMessage = AddAttachments(emailMessage, request.Attachments);
+            }
+            
             // Check if we have any recipients
             if (emailMessage.To.Count == 0 && emailMessage.Cc.Count == 0 && emailMessage.Bcc.Count == 0)
             {
@@ -59,7 +66,7 @@ public class NotificationService(
                 return false;
             }
             
-            // Step 5: Send the email
+            // Step 6: Send the email
             logger.LogDebug("Sending email for notification type {NotificationType}", request.Type);
             await emailSender.SendEmailAsync(emailMessage, cancellationToken);
             
@@ -112,6 +119,38 @@ public class NotificationService(
         
         logger.LogDebug("Added {RecipientCount} recipients to email message", 
             emailMessage.To.Count + emailMessage.Cc.Count + emailMessage.Bcc.Count);
+    }
+
+    /// <summary>
+    /// Adds attachments to the email message from the notification request
+    /// </summary>
+    /// <returns>A new EmailMessage with the attachments added</returns>
+    private EmailMessage AddAttachments(EmailMessage emailMessage, IReadOnlyCollection<IAttachment> attachments)
+    {
+        var emailAttachments = new List<EmailAttachment>();
+        
+        foreach (var attachment in attachments)
+        {
+            emailAttachments.Add(new EmailAttachment
+            {
+                FileName = attachment.FileName,
+                Content = new ReadOnlyMemory<byte>(attachment.Content),
+                ContentType = attachment.ContentType,
+                IsInline = attachment.IsInline,
+                ContentId = attachment.ContentId
+            });
+        }
+        
+        // Create a new EmailMessage with attachments using the with-expression
+        // This is necessary because Attachments is an init-only property
+        var messageWithAttachments = emailMessage with
+        {
+            Attachments = emailAttachments
+        };
+        
+        logger.LogDebug("Added {AttachmentCount} attachments to email message", attachments.Count);
+        
+        return messageWithAttachments;
     }
 
     /// <summary>
