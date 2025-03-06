@@ -116,9 +116,8 @@ internal sealed class ScribanEmailTemplateRenderer : ITemplateRenderer
             var wrapperTemplate = Template.Parse(wrapperTemplateContent);
             
             // Create script object for wrapper binding
-            var wrapperScriptObject = new ScriptObject();
-            wrapperScriptObject.Add("body", bodyContent);
-            
+            var wrapperScriptObject = new ScriptObject { { "body", bodyContent } };
+
             _logger.LogDebug("Rendering with wrapper template");
             var result = await wrapperTemplate.RenderAsync(wrapperScriptObject);
             
