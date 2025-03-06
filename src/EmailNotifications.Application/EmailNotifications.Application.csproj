@@ -11,6 +11,7 @@
 
   <ItemGroup>
     <Folder Include="Common\Notifications\" />
+    <Folder Include="Common\Reports\Interfaces\" />
   </ItemGroup>
 
   <PropertyGroup>
