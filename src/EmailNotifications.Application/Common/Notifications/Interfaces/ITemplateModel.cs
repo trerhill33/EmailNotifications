@@ -1,4 +1,4 @@
-namespace EmailNotifications.Application.Models;
+namespace EmailNotifications.Application.Common.Notifications.Interfaces;
 
 /// <summary>
 /// Base interface for all email template models

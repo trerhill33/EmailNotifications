@@ -1,5 +1,5 @@
-using EmailNotifications.Application.Interfaces;
-using EmailNotifications.Application.Models;
+using EmailNotifications.Application.Common.Notifications.Interfaces;
+using EmailNotifications.Application.Common.Notifications.Models;
 using Microsoft.Extensions.Logging;
 
 namespace EmailNotifications.Application.Services;

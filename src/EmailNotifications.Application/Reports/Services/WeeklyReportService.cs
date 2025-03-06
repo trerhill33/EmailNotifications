@@ -1,6 +1,6 @@
+using EmailNotifications.Application.Common.Notifications.Interfaces;
 using EmailNotifications.Application.Reports.Models;
 using EmailNotifications.Domain.Enums;
-using EmailNotifications.Application.Interfaces;
 using Microsoft.Extensions.Logging;
 
 namespace EmailNotifications.Application.Reports.Services;

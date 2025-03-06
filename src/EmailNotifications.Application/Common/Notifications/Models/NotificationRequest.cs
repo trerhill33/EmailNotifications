@@ -1,6 +1,7 @@
+using EmailNotifications.Application.Common.Notifications.Interfaces;
 using EmailNotifications.Domain.Enums;
 
-namespace EmailNotifications.Application.Models;
+namespace EmailNotifications.Application.Common.Notifications.Models;
 
 /// <summary>
 /// Base interface for notification requests

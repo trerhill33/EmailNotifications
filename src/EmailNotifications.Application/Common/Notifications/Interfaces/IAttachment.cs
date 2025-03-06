@@ -1,4 +1,4 @@
-namespace EmailNotifications.Application.Models;
+namespace EmailNotifications.Application.Common.Notifications.Interfaces;
 
 /// <summary>
 /// Represents an attachment that can be included with a notification

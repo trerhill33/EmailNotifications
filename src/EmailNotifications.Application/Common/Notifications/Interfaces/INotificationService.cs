@@ -1,6 +1,6 @@
-using EmailNotifications.Application.Models;
+using EmailNotifications.Application.Common.Notifications.Models;
 
-namespace EmailNotifications.Application.Interfaces;
+namespace EmailNotifications.Application.Common.Notifications.Interfaces;
 
 public interface INotificationService
 {

@@ -1,6 +1,6 @@
 using System.Net.Mail;
-using EmailNotifications.Application.Interfaces;
-using EmailNotifications.Application.Models;
+using EmailNotifications.Application.Common.Notifications.Interfaces;
+using EmailNotifications.Application.Common.Notifications.Models;
 using EmailNotifications.Domain.Entities;
 using EmailNotifications.Domain.Enums;
 using EmailNotifications.Infrastructure.Interfaces;

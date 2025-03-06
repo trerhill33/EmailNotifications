@@ -1,4 +1,3 @@
-using EmailNotifications.Application.Interfaces;
 using EmailNotifications.Application.Reports;
 using EmailNotifications.Application.Reports.Services;
 using EmailNotifications.Application.Services;

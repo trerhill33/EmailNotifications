@@ -1,4 +1,6 @@
-namespace EmailNotifications.Application.Models;
+using EmailNotifications.Application.Common.Notifications.Interfaces;
+
+namespace EmailNotifications.Application.Common.Notifications.Models;
 
 /// <summary>
 /// Represents a file attachment for a notification
