@@ -1,15 +1,8 @@
-using System;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
-using EmailNotifications.Api.Models;
 using EmailNotifications.Application.Common.Results;
 using EmailNotifications.Domain.Entities;
 using EmailNotifications.Domain.Enums;
 using EmailNotifications.Infrastructure.Interfaces;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
 
 namespace EmailNotifications.Api.Controllers;
 
@@ -55,7 +48,7 @@ public class EmailSpecificationsController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving all email specifications");
-            return StatusCode(500, Result.Failure("An error occurred while retrieving email specifications"));
+            return StatusCode(500, Result.FailAsync("An error occurred while retrieving email specifications"));
         }
     }
 
@@ -76,14 +69,14 @@ public class EmailSpecificationsController : ControllerBase
             var specification = await _repository.GetByNotificationTypeAsync(notificationType, cancellationToken);
             if (specification == null)
             {
-                return NotFound(Result.Failure($"Email specification for notification type {notificationType} not found", ResultStatus.NotFound));
+                return NotFound(Result.FailAsync($"Email specification for notification type {notificationType} not found", ResultStatus.NotFound));
             }
             return Ok(Result<EmailSpecification>.Success(specification));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving email specification for notification type {NotificationType}", notificationType);
-            return StatusCode(500, Result.Failure($"An error occurred while retrieving email specification for notification type {notificationType}"));
+            return StatusCode(500, Result.FailAsync($"An error occurred while retrieving email specification for notification type {notificationType}"));
         }
     }
 
@@ -107,7 +100,7 @@ public class EmailSpecificationsController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error creating email specification");
-            return BadRequest(Result.Failure("Error creating email specification: " + ex.Message));
+            return BadRequest(Result.FailAsync("Error creating email specification: " + ex.Message));
         }
     }
 
@@ -128,7 +121,7 @@ public class EmailSpecificationsController : ControllerBase
     {
         if (id != specification.Id)
         {
-            return BadRequest(Result.Failure("ID mismatch", ResultStatus.BadRequest));
+            return BadRequest(Result.FailAsync("ID mismatch", ResultStatus.Error));
         }
 
         try
@@ -139,12 +132,12 @@ public class EmailSpecificationsController : ControllerBase
         catch (InvalidOperationException ex)
         {
             _logger.LogError(ex, "Error updating email specification with ID {Id}", id);
-            return NotFound(Result.Failure(ex.Message, ResultStatus.NotFound));
+            return NotFound(Result.FailAsync(ex.Message, ResultStatus.NotFound));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error updating email specification with ID {Id}", id);
-            return BadRequest(Result.Failure("Error updating email specification: " + ex.Message));
+            return BadRequest(Result.FailAsync("Error updating email specification: " + ex.Message));
         }
     }
 
@@ -168,12 +161,12 @@ public class EmailSpecificationsController : ControllerBase
         catch (InvalidOperationException ex)
         {
             _logger.LogError(ex, "Error deleting email specification with ID {Id}", id);
-            return NotFound(Result.Failure(ex.Message, ResultStatus.NotFound));
+            return NotFound(Result.FailAsync(ex.Message, ResultStatus.NotFound));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error deleting email specification with ID {Id}", id);
-            return BadRequest(Result.Failure("Error deleting email specification: " + ex.Message));
+            return BadRequest(Result.FailAsync("Error deleting email specification: " + ex.Message));
         }
     }
 
@@ -197,12 +190,12 @@ public class EmailSpecificationsController : ControllerBase
         catch (InvalidOperationException ex)
         {
             _logger.LogError(ex, "Error retrieving recipients for email specification with ID {Id}", specificationId);
-            return NotFound(Result.Failure(ex.Message, ResultStatus.NotFound));
+            return NotFound(Result.FailAsync(ex.Message, ResultStatus.NotFound));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving recipients for email specification with ID {Id}", specificationId);
-            return BadRequest(Result.Failure("Error retrieving recipients: " + ex.Message));
+            return BadRequest(Result.FailAsync("Error retrieving recipients: " + ex.Message));
         }
     }
 
@@ -229,12 +222,12 @@ public class EmailSpecificationsController : ControllerBase
         catch (InvalidOperationException ex)
         {
             _logger.LogError(ex, "Error adding recipient to email specification with ID {Id}", specificationId);
-            return NotFound(Result.Failure(ex.Message, ResultStatus.NotFound));
+            return NotFound(Result.FailAsync(ex.Message, ResultStatus.NotFound));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error adding recipient to email specification with ID {Id}", specificationId);
-            return BadRequest(Result.Failure("Error adding recipient: " + ex.Message));
+            return BadRequest(Result.FailAsync("Error adding recipient: " + ex.Message));
         }
     }
 
@@ -261,12 +254,12 @@ public class EmailSpecificationsController : ControllerBase
         catch (InvalidOperationException ex)
         {
             _logger.LogError(ex, "Error updating recipient in email specification with ID {Id}", specificationId);
-            return NotFound(Result.Failure(ex.Message, ResultStatus.NotFound));
+            return NotFound(Result.FailAsync(ex.Message, ResultStatus.NotFound));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error updating recipient in email specification with ID {Id}", specificationId);
-            return BadRequest(Result.Failure("Error updating recipient: " + ex.Message));
+            return BadRequest(Result.FailAsync("Error updating recipient: " + ex.Message));
         }
     }
 
@@ -291,12 +284,12 @@ public class EmailSpecificationsController : ControllerBase
         catch (InvalidOperationException ex)
         {
             _logger.LogError(ex, "Error deleting recipient from email specification with ID {Id}", specificationId);
-            return NotFound(Result.Failure(ex.Message, ResultStatus.NotFound));
+            return NotFound(Result.FailAsync(ex.Message, ResultStatus.NotFound));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error deleting recipient from email specification with ID {Id}", specificationId);
-            return BadRequest(Result.Failure("Error deleting recipient: " + ex.Message));
+            return BadRequest(Result.FailAsync("Error deleting recipient: " + ex.Message));
         }
     }
 } 
