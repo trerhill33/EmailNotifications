@@ -1,6 +1,5 @@
 using EmailNotifications.Application.Common.Notifications.Interfaces;
-using EmailNotifications.Application.Reports.Models;
-using EmailNotifications.Domain.Enums;
+using EmailNotifications.Application.Common.Notifications.Models;
 using Microsoft.Extensions.Logging;
 
 namespace EmailNotifications.Application.Reports.Services;
@@ -8,213 +7,244 @@ namespace EmailNotifications.Application.Reports.Services;
 /// <summary>
 /// Implementation of the daily report service
 /// </summary>
-public class DailyReportService : IDailyReportService
+public sealed class DailyReportService(
+    INotificationService notificationService,
+    ILogger<DailyReportService> logger) : IDailyReportService
 {
-    private readonly INotificationService _notificationService;
-    private readonly ILogger<DailyReportService> _logger;
-
-    /// <summary>
-    /// Initializes a new instance of the DailyReportService class
-    /// </summary>
-    /// <param name="notificationService">The notification service for sending emails</param>
-    /// <param name="logger">The logger instance</param>
-    public DailyReportService(
-        INotificationService notificationService,
-        ILogger<DailyReportService> logger)
-    {
-        _notificationService = notificationService ?? throw new ArgumentNullException(nameof(notificationService));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-    }
+    private readonly INotificationService _notificationService = notificationService ?? throw new ArgumentNullException(nameof(notificationService));
+    private readonly ILogger<DailyReportService> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
     /// <summary>
     /// Generates and sends all daily reports
     /// </summary>
-    public async Task GenerateAndSendAllReportsAsync(CancellationToken cancellationToken = default)
+    public async Task<bool> GenerateAndSendAllReportsAsync(CancellationToken cancellationToken = default)
     {
         _logger.LogInformation("Starting daily report generation");
         
         try
         {
-            await SendFedExRemittanceSummaryAsync(cancellationToken);
-            await SendFedExRemittanceDetailsAsync(cancellationToken);
-            await SendFedExFileMissingNotificationAsync(cancellationToken);
-            await SendReassignedTrackingNumbersReportAsync(cancellationToken);
-            await SendDelayedInvoicesReportAsync(cancellationToken);
-            await SendPendingApprovalNotificationsAsync(cancellationToken);
+            var results = new[]
+            {
+                await SendFedExRemittanceSummaryAsync(cancellationToken),
+                await SendFedExRemittanceDetailsAsync(cancellationToken),
+                await SendFedExFileMissingNotificationAsync(cancellationToken),
+                await SendReassignedTrackingNumbersReportAsync(cancellationToken),
+                await SendDelayedInvoicesReportAsync(cancellationToken),
+                await SendPendingApprovalNotificationsAsync(cancellationToken)
+            };
             
-            _logger.LogInformation("All daily reports generated and sent successfully");
+            var allSuccessful = results.All(r => r);
+            if (allSuccessful)
+            {
+                _logger.LogInformation("All daily reports generated and sent successfully");
+            }
+            else
+            {
+                _logger.LogWarning("Some daily reports failed to send");
+            }
+            
+            return allSuccessful;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error generating daily reports");
-            throw;
+            return false;
         }
     }
 
     /// <summary>
     /// Sends the FedEx Remittance Summary report
     /// </summary>
-    public async Task SendFedExRemittanceSummaryAsync(CancellationToken cancellationToken = default)
+    public async Task<bool> SendFedExRemittanceSummaryAsync(CancellationToken cancellationToken = default)
     {
-        _logger.LogInformation("Generating FedEx Remittance Summary report");
-        
         try
         {
-            // Create a simple model for the report
-            var model = new FedExRemittanceSummaryModel();
+            _logger.LogInformation("Generating FedEx Remittance Summary report");
             
-            // Send the notification
-            await _notificationService.SendNotificationAsync(
-                NotificationType.FedExWeeklyChargesSummary,
-                model,
-                null,
-                cancellationToken);
-            
-            _logger.LogInformation("FedEx Remittance Summary report sent successfully");
+            var result = await _notificationService.SendAsync(NotificationTemplates.FedExRemittanceSummary(
+                reportTitle: "FedEx Daily Remittance Summary",
+                dateRange: DateTime.Now.ToString("yyyy-MM-dd"),
+                totalRemittance: 0.00m // TODO: Replace with actual value
+            ), cancellationToken);
+
+            if (result)
+            {
+                _logger.LogInformation("FedEx Remittance Summary report sent successfully");
+            }
+            else
+            {
+                _logger.LogWarning("Failed to send FedEx Remittance Summary report");
+            }
+
+            return result;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error sending FedEx Remittance Summary report");
-            throw;
+            return false;
         }
     }
 
     /// <summary>
     /// Sends the FedEx Remittance Details report
     /// </summary>
-    public async Task SendFedExRemittanceDetailsAsync(CancellationToken cancellationToken = default)
+    public async Task<bool> SendFedExRemittanceDetailsAsync(CancellationToken cancellationToken = default)
     {
-        _logger.LogInformation("Generating FedEx Remittance Details report");
-        
         try
         {
-            // Create a simple model for the report
-            var model = new FedExRemittanceDetailsModel();
+            _logger.LogInformation("Generating FedEx Remittance Details report");
             
-            // Send the notification
-            await _notificationService.SendAsync(
-                NotificationType.FedExRemittanceDetails,
-                model,
-                cancellationToken);
-            
-            _logger.LogInformation("FedEx Remittance Details report sent successfully");
+            var result = await _notificationService.SendAsync(NotificationTemplates.FedExRemittanceDetails(
+                reportTitle: "FedEx Daily Remittance Details",
+                dateRange: DateTime.Now.ToString("yyyy-MM-dd"),
+                totalRemittance: 0.00m // TODO: Replace with actual value
+            ), cancellationToken);
+
+            if (result)
+            {
+                _logger.LogInformation("FedEx Remittance Details report sent successfully");
+            }
+            else
+            {
+                _logger.LogWarning("Failed to send FedEx Remittance Details report");
+            }
+
+            return result;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error sending FedEx Remittance Details report");
-            throw;
+            return false;
         }
     }
 
     /// <summary>
     /// Sends a notification when a FedEx file is missing
     /// </summary>
-    public async Task SendFedExFileMissingNotificationAsync(CancellationToken cancellationToken = default)
+    public async Task<bool> SendFedExFileMissingNotificationAsync(CancellationToken cancellationToken = default)
     {
-        _logger.LogInformation("Generating FedEx File Missing notification");
-        
         try
         {
-            // Create a simple model for the notification
-            var model = new FedExFileMissingModel();
+            _logger.LogInformation("Generating FedEx File Missing notification");
             
-            // Send the notification
-            await _notificationService.SendNotificationAsync(
-                NotificationType.FedExFileMissing,
-                model,
-                null,
-                cancellationToken);
-            
-            _logger.LogInformation("FedEx File Missing notification sent successfully");
+            var result = await _notificationService.SendAsync(NotificationTemplates.FedExFileMissing(
+                expectedDate: DateTime.Now.ToString("yyyy-MM-dd"),
+                fileType: "Daily Charges"
+            ), cancellationToken);
+
+            if (result)
+            {
+                _logger.LogInformation("FedEx File Missing notification sent successfully");
+            }
+            else
+            {
+                _logger.LogWarning("Failed to send FedEx File Missing notification");
+            }
+
+            return result;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error sending FedEx File Missing notification");
-            throw;
+            return false;
         }
     }
 
     /// <summary>
     /// Sends a report of all tracking numbers reassigned to specific organizations
     /// </summary>
-    public async Task SendReassignedTrackingNumbersReportAsync(CancellationToken cancellationToken = default)
+    public async Task<bool> SendReassignedTrackingNumbersReportAsync(CancellationToken cancellationToken = default)
     {
-        _logger.LogInformation("Generating Reassigned Tracking Numbers report");
-        
         try
         {
-            // Create a simple model for the report
-            var model = new ReassignedTrackingNumbersModel();
+            _logger.LogInformation("Generating Reassigned Tracking Numbers report");
             
-            // Send the notification
-            await _notificationService.SendNotificationAsync(
-                NotificationType.DailyReassignedTrackingNumbers,
-                model,
-                null,
-                cancellationToken);
-            
-            _logger.LogInformation("Reassigned Tracking Numbers report sent successfully");
+            var result = await _notificationService.SendAsync(NotificationTemplates.ReassignedTrackingNumbers(
+                reportTitle: "Daily Reassigned Tracking Numbers",
+                reportDate: DateTime.Now.ToString("yyyy-MM-dd"),
+                totalReassigned: 0 // TODO: Replace with actual value
+            ), cancellationToken);
+
+            if (result)
+            {
+                _logger.LogInformation("Reassigned Tracking Numbers report sent successfully");
+            }
+            else
+            {
+                _logger.LogWarning("Failed to send Reassigned Tracking Numbers report");
+            }
+
+            return result;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error sending Reassigned Tracking Numbers report");
-            throw;
+            return false;
         }
     }
 
     /// <summary>
     /// Sends a report of invoices that are delayed in processing (≥ 10 days after invoice date)
     /// </summary>
-    public async Task SendDelayedInvoicesReportAsync(CancellationToken cancellationToken = default)
+    public async Task<bool> SendDelayedInvoicesReportAsync(CancellationToken cancellationToken = default)
     {
-        _logger.LogInformation("Generating Delayed Invoices report");
-        
         try
         {
-            // Create a simple model for the report
-            var model = new DelayedInvoicesModel();
+            _logger.LogInformation("Generating Delayed Invoices report");
             
-            // Send the notification
-            await _notificationService.SendNotificationAsync(
-                NotificationType.DelayedInvoicesReport,
-                model,
-                null,
-                cancellationToken);
-            
-            _logger.LogInformation("Delayed Invoices report sent successfully");
+            var result = await _notificationService.SendAsync(NotificationTemplates.DelayedInvoices(
+                reportTitle: "Daily Delayed Invoices Report",
+                reportDate: DateTime.Now.ToString("yyyy-MM-dd"),
+                totalDelayed: 0 // TODO: Replace with actual value
+            ), cancellationToken);
+
+            if (result)
+            {
+                _logger.LogInformation("Delayed Invoices report sent successfully");
+            }
+            else
+            {
+                _logger.LogWarning("Failed to send Delayed Invoices report");
+            }
+
+            return result;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error sending Delayed Invoices report");
-            throw;
+            return false;
         }
     }
 
     /// <summary>
     /// Sends notifications for batches that need approval
     /// </summary>
-    public async Task SendPendingApprovalNotificationsAsync(CancellationToken cancellationToken = default)
+    public async Task<bool> SendPendingApprovalNotificationsAsync(CancellationToken cancellationToken = default)
     {
-        _logger.LogInformation("Generating Pending Approval notifications");
-        
         try
         {
-            // Create a simple model for the notification
-            var model = new PendingApprovalNotificationModel();
+            _logger.LogInformation("Generating Pending Approval notifications");
             
-            // Send the notification
-            await _notificationService.SendNotificationAsync(
-                NotificationType.PendingApprovalNotification,
-                model,
-                null,
-                cancellationToken);
-            
-            _logger.LogInformation("Pending Approval notifications sent successfully");
+            var result = await _notificationService.SendAsync(NotificationTemplates.PendingApproval(
+                approverName: "System User", // TODO: Replace with actual approver name
+                pendingCount: 0 // TODO: Replace with actual value
+            ), cancellationToken);
+
+            if (result)
+            {
+                _logger.LogInformation("Pending Approval notifications sent successfully");
+            }
+            else
+            {
+                _logger.LogWarning("Failed to send Pending Approval notifications");
+            }
+
+            return result;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error sending Pending Approval notifications");
-            throw;
+            return false;
         }
     }
 } 

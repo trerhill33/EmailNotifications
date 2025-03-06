@@ -8,5 +8,5 @@ public interface IReportService
     /// <summary>
     /// Generates and sends all reports for this service
     /// </summary>
-    Task GenerateAndSendAllReportsAsync(CancellationToken cancellationToken = default);
+    Task<bool> GenerateAndSendAllReportsAsync(CancellationToken cancellationToken = default);
 } 

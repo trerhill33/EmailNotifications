@@ -8,24 +8,15 @@ namespace EmailNotifications.Api.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
-public class ReportsController : ControllerBase
+public class ReportsController(
+    IDailyReportService dailyReportService,
+    IWeeklyReportService weeklyReportService,
+    ILogger<ReportsController> logger)
+    : ControllerBase
 {
-    private readonly IDailyReportService _dailyReportService;
-    private readonly IWeeklyReportService _weeklyReportService;
-    private readonly ILogger<ReportsController> _logger;
-
-    /// <summary>
-    /// Initializes a new instance of the ReportsController
-    /// </summary>
-    public ReportsController(
-        IDailyReportService dailyReportService,
-        IWeeklyReportService weeklyReportService,
-        ILogger<ReportsController> logger)
-    {
-        _dailyReportService = dailyReportService ?? throw new ArgumentNullException(nameof(dailyReportService));
-        _weeklyReportService = weeklyReportService ?? throw new ArgumentNullException(nameof(weeklyReportService));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-    }
+    private readonly IDailyReportService _dailyReportService = dailyReportService ?? throw new ArgumentNullException(nameof(dailyReportService));
+    private readonly IWeeklyReportService _weeklyReportService = weeklyReportService ?? throw new ArgumentNullException(nameof(weeklyReportService));
+    private readonly ILogger<ReportsController> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
     /// <summary>
     /// Generates and sends all daily reports
@@ -140,7 +131,7 @@ public class ReportsController : ControllerBase
                     await _weeklyReportService.SendTrackingNumbersByBusinessUnitReportAsync(cancellationToken);
                     break;
                 case "invalid-employee-id":
-                    await _weeklyReportService.SendInvalidEmployeeIdReportAsync(cancellationToken);
+                    await _weeklyReportService.SendInvalidEmployeeIdSummaryAsync(cancellationToken);
                     break;
                 default:
                     return BadRequest($"Unknown report type: {reportType}");

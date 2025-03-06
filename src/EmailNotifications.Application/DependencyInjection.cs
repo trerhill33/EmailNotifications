@@ -1,6 +1,5 @@
 using EmailNotifications.Application.Reports;
 using EmailNotifications.Application.Reports.Services;
-using EmailNotifications.Application.Services;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace EmailNotifications.Application;
