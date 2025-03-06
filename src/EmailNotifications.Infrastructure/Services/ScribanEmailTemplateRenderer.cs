@@ -8,7 +8,7 @@ namespace EmailNotifications.Infrastructure.Services;
 /// <summary>
 /// Scriban-based implementation of the template renderer
 /// </summary>
-internal sealed class ScribanEmailTemplateRenderer : ITemplateRenderer
+public sealed class ScribanEmailTemplateRenderer : ITemplateRenderer
 {
     private readonly ILogger<ScribanEmailTemplateRenderer> _logger;
     private readonly string _wrapperTemplate;

@@ -126,6 +126,96 @@ public class DatabaseSeeder(NotificationDbContext context, ILogger<DatabaseSeede
                     FromName = "Our Platform",
                     IsActive = true,
                     CreatedAt = DateTime.UtcNow
+                },
+                new EmailSpecification
+                {
+                    NotificationType = NotificationType.FedExWeeklyChargesSummary,
+                    Name = "FedEx Weekly Charges Summary",
+                    Subject = "FedEx Weekly Charges Summary Report",
+                    HtmlBody = @"
+                        <div class='content'>
+                            <h1>{{ report_title }}</h1>
+                            <p>Date Range: {{ date_range }}</p>
+                            <p>Total Shipments: {{ total_shipments }}</p>
+                            <p>Total Cost: ${{ total_cost }}</p>
+                            <p>Please find the detailed report attached to this email.</p>
+                            <p>Best regards,<br>The Logistics Team</p>
+                        </div>",
+                    TextBody = @"
+                        {{ report_title }}
+
+                        Date Range: {{ date_range }}
+                        Total Shipments: {{ total_shipments }}
+                        Total Cost: ${{ total_cost }}
+
+                        Please find the detailed report attached to this email.
+
+                        Best regards,
+                        The Logistics Team",
+                    FromAddress = "logistics@example.com",
+                    FromName = "FedEx Reporting System",
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow
+                },
+                new EmailSpecification
+                {
+                    NotificationType = NotificationType.FedExMonthlyDeliveryPerformance,
+                    Name = "FedEx Monthly Delivery Performance",
+                    Subject = "FedEx Monthly Delivery Performance Report",
+                    HtmlBody = @"
+                        <div class='content'>
+                            <h1>{{ report_title }}</h1>
+                            <p>Date Range: {{ date_range }}</p>
+                            <p>Total Shipments: {{ total_shipments }}</p>
+                            <p>Total Cost: ${{ total_cost }}</p>
+                            <p>Please find the detailed performance report attached to this email.</p>
+                            <p>Best regards,<br>The Logistics Team</p>
+                        </div>",
+                    TextBody = @"
+                        {{ report_title }}
+
+                        Date Range: {{ date_range }}
+                        Total Shipments: {{ total_shipments }}
+                        Total Cost: ${{ total_cost }}
+
+                        Please find the detailed performance report attached to this email.
+
+                        Best regards,
+                        The Logistics Team",
+                    FromAddress = "logistics@example.com",
+                    FromName = "FedEx Reporting System",
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow
+                },
+                new EmailSpecification
+                {
+                    NotificationType = NotificationType.FedExQuarterlyCostAnalysis,
+                    Name = "FedEx Quarterly Cost Analysis",
+                    Subject = "FedEx Quarterly Cost Analysis Report",
+                    HtmlBody = @"
+                        <div class='content'>
+                            <h1>{{ report_title }}</h1>
+                            <p>Date Range: {{ date_range }}</p>
+                            <p>Total Shipments: {{ total_shipments }}</p>
+                            <p>Total Cost: ${{ total_cost }}</p>
+                            <p>Please find the detailed cost analysis report attached to this email.</p>
+                            <p>Best regards,<br>The Logistics Team</p>
+                        </div>",
+                    TextBody = @"
+                        {{ report_title }}
+
+                        Date Range: {{ date_range }}
+                        Total Shipments: {{ total_shipments }}
+                        Total Cost: ${{ total_cost }}
+
+                        Please find the detailed cost analysis report attached to this email.
+
+                        Best regards,
+                        The Logistics Team",
+                    FromAddress = "logistics@example.com",
+                    FromName = "FedEx Reporting System",
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow
                 }
             };
 
@@ -241,9 +331,59 @@ public class DatabaseSeeder(NotificationDbContext context, ILogger<DatabaseSeede
             LastModifiedBy = "System"
         };
 
+        var fedExWeeklyTemplate = new EmailSpecification
+        {
+            Name = "FedEx Weekly Charges Summary",
+            NotificationType = NotificationType.FedExWeeklyChargesSummary,
+            Subject = "FedEx Weekly Charges Summary Report",
+            HtmlBody = @"<div class='content'>
+                <h1>{{ report_title }}</h1>
+                <p>Date Range: {{ date_range }}</p>
+                <p>Total Shipments: {{ total_shipments }}</p>
+                <p>Total Cost: ${{ total_cost }}</p>
+                <p>Please find the detailed report attached to this email.</p>
+                <p>Best regards,<br>The Logistics Team</p>
+            </div>",
+            TextBody = "{{ report_title }}\n\nDate Range: {{ date_range }}\nTotal Shipments: {{ total_shipments }}\nTotal Cost: ${{ total_cost }}\n\nPlease find the detailed report attached to this email.\n\nBest regards,\nThe Logistics Team",
+            FromAddress = "logistics@example.com",
+            FromName = "FedEx Reporting System",
+            Priority = 2,
+            IsActive = true,
+            CreatedAt = DateTime.UtcNow,
+            CreatedBy = "System",
+            LastModifiedAt = DateTime.UtcNow,
+            LastModifiedBy = "System"
+        };
+
+        var fedExMonthlyTemplate = new EmailSpecification
+        {
+            Name = "FedEx Monthly Delivery Performance",
+            NotificationType = NotificationType.FedExMonthlyDeliveryPerformance,
+            Subject = "FedEx Monthly Delivery Performance Report",
+            HtmlBody = @"<div class='content'>
+                <h1>{{ report_title }}</h1>
+                <p>Date Range: {{ date_range }}</p>
+                <p>Total Shipments: {{ total_shipments }}</p>
+                <p>Total Cost: ${{ total_cost }}</p>
+                <p>Please find the detailed performance report attached to this email.</p>
+                <p>Best regards,<br>The Logistics Team</p>
+            </div>",
+            TextBody = "{{ report_title }}\n\nDate Range: {{ date_range }}\nTotal Shipments: {{ total_shipments }}\nTotal Cost: ${{ total_cost }}\n\nPlease find the detailed performance report attached to this email.\n\nBest regards,\nThe Logistics Team",
+            FromAddress = "logistics@example.com",
+            FromName = "FedEx Reporting System",
+            Priority = 2,
+            IsActive = true,
+            CreatedAt = DateTime.UtcNow,
+            CreatedBy = "System",
+            LastModifiedAt = DateTime.UtcNow,
+            LastModifiedBy = "System"
+        };
+
         // Check if templates already exist
         var existingWelcomeTemplate = await specificationRepository.GetByNotificationTypeAsync(NotificationType.Welcome);
         var existingPasswordResetTemplate = await specificationRepository.GetByNotificationTypeAsync(NotificationType.PasswordReset);
+        var existingFedExWeeklyTemplate = await specificationRepository.GetByNotificationTypeAsync(NotificationType.FedExWeeklyChargesSummary);
+        var existingFedExMonthlyTemplate = await specificationRepository.GetByNotificationTypeAsync(NotificationType.FedExMonthlyDeliveryPerformance);
 
         if (existingWelcomeTemplate == null)
         {
@@ -253,6 +393,16 @@ public class DatabaseSeeder(NotificationDbContext context, ILogger<DatabaseSeede
         if (existingPasswordResetTemplate == null)
         {
             await specificationRepository.AddAsync(passwordResetTemplate);
+        }
+
+        if (existingFedExWeeklyTemplate == null)
+        {
+            await specificationRepository.AddAsync(fedExWeeklyTemplate);
+        }
+
+        if (existingFedExMonthlyTemplate == null)
+        {
+            await specificationRepository.AddAsync(fedExMonthlyTemplate);
         }
     }
 } 

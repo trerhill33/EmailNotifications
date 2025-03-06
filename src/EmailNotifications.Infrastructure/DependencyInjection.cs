@@ -1,4 +1,5 @@
 using EmailNotifications.Application.Interfaces;
+using EmailNotifications.Application.Services;
 using EmailNotifications.Infrastructure.Configuration;
 using EmailNotifications.Infrastructure.Interfaces;
 using EmailNotifications.Infrastructure.Persistence;
@@ -44,6 +45,7 @@ public static class DependencyInjection
 
         // Add application services
         services.AddScoped<INotificationService, NotificationService>();
+        services.AddScoped<FedExReportService>();
 
         // Register the database seeder
         services.AddScoped<DatabaseSeeder>();

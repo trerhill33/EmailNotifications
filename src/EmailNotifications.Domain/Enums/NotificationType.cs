@@ -1,3 +1,5 @@
+using System;
+
 namespace EmailNotifications.Domain.Enums;
 
 /// <summary>
@@ -18,5 +20,20 @@ public enum NotificationType
     /// <summary>
     /// Welcome email sent to new users
     /// </summary>
-    Welcome = 3
+    Welcome = 3,
+
+    /// <summary>
+    /// FedEx weekly charges summary report
+    /// </summary>
+    FedExWeeklyChargesSummary = 4,
+
+    /// <summary>
+    /// FedEx monthly delivery performance report
+    /// </summary>
+    FedExMonthlyDeliveryPerformance = 5,
+
+    /// <summary>
+    /// FedEx quarterly cost analysis report
+    /// </summary>
+    FedExQuarterlyCostAnalysis = 6
 } 

@@ -4,7 +4,7 @@ namespace EmailNotifications.Application.Common.Results;
 
 public class Result<T> : Result, IResult<T>, IResult
 {
-    public T Data { get; set; }
+    public T? Data { get; set; }
 
     private new static Result<T> Fail(ResultStatus status = ResultStatus.Error) =>
         new()
