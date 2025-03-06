@@ -1,3 +1,4 @@
+using EmailNotifications.Domain;
 using EmailNotifications.Domain.Enums;
 
 namespace EmailNotifications.Domain.Entities;
@@ -8,9 +9,14 @@ namespace EmailNotifications.Domain.Entities;
 public sealed class EmailLog : AuditableEntity
 {
     /// <summary>
+    /// The notification type associated with this email log
+    /// </summary>
+    public NotificationType NotificationType { get; set; }
+
+    /// <summary>
     /// The ID of the email specification used for this email
     /// </summary>
-    public Guid EmailSpecificationId { get; set; }
+    public int EmailSpecificationId { get; set; }
 
     /// <summary>
     /// The email specification used for this email

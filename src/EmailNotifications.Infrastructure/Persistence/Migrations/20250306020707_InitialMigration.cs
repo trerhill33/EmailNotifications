@@ -4,7 +4,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace EmailNotifications.Infrastructure.Migrations
+namespace EmailNotifications.Infrastructure.Persistence.Migrations
 {
     /// <inheritdoc />
     public partial class InitialMigration : Migration
@@ -14,34 +14,6 @@ namespace EmailNotifications.Infrastructure.Migrations
         {
             migrationBuilder.EnsureSchema(
                 name: "notification");
-
-            migrationBuilder.CreateTable(
-                name: "EmailLogs",
-                schema: "notification",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    NotificationType = table.Column<int>(type: "integer", nullable: false),
-                    Subject = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
-                    FromAddress = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
-                    FromName = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
-                    ToAddress = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
-                    ToName = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
-                    CcAddresses = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
-                    BccAddresses = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
-                    Status = table.Column<int>(type: "integer", nullable: false),
-                    ErrorMessage = table.Column<string>(type: "character varying(4000)", maxLength: 4000, nullable: true),
-                    SentAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    CreatedBy = table.Column<string>(type: "text", nullable: true),
-                    LastModifiedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    LastModifiedBy = table.Column<string>(type: "text", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_EmailLogs", x => x.Id);
-                });
 
             migrationBuilder.CreateTable(
                 name: "EmailSpecifications",
@@ -68,6 +40,44 @@ namespace EmailNotifications.Infrastructure.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_EmailSpecifications", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "EmailLogs",
+                schema: "notification",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    NotificationType = table.Column<int>(type: "integer", nullable: false),
+                    EmailSpecificationId = table.Column<int>(type: "integer", nullable: false),
+                    Subject = table.Column<string>(type: "text", nullable: false),
+                    FromAddress = table.Column<string>(type: "text", nullable: false),
+                    FromName = table.Column<string>(type: "text", nullable: true),
+                    ToAddresses = table.Column<string>(type: "text", nullable: false),
+                    CcAddresses = table.Column<string>(type: "text", nullable: true),
+                    BccAddresses = table.Column<string>(type: "text", nullable: true),
+                    Status = table.Column<int>(type: "integer", nullable: false),
+                    SentAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    AttemptCount = table.Column<int>(type: "integer", nullable: false),
+                    NextAttemptAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    ErrorMessage = table.Column<string>(type: "text", nullable: true),
+                    SerializedModel = table.Column<string>(type: "text", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    CreatedBy = table.Column<string>(type: "text", nullable: true),
+                    LastModifiedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    LastModifiedBy = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_EmailLogs", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_EmailLogs_EmailSpecifications_EmailSpecificationId",
+                        column: x => x.EmailSpecificationId,
+                        principalSchema: "notification",
+                        principalTable: "EmailSpecifications",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -132,10 +142,16 @@ namespace EmailNotifications.Infrastructure.Migrations
                 column: "CreatedAt");
 
             migrationBuilder.CreateIndex(
-                name: "IX_EmailLogs_NotificationType",
+                name: "IX_EmailLogs_EmailSpecificationId",
                 schema: "notification",
                 table: "EmailLogs",
-                column: "NotificationType");
+                column: "EmailSpecificationId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_EmailLogs_NextAttemptAt",
+                schema: "notification",
+                table: "EmailLogs",
+                column: "NextAttemptAt");
 
             migrationBuilder.CreateIndex(
                 name: "IX_EmailLogs_SentAt",

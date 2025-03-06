@@ -8,7 +8,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace EmailNotifications.Infrastructure.Migrations
+namespace EmailNotifications.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(NotificationDbContext))]
     partial class NotificationDbContextModelSnapshot : ModelSnapshot
@@ -31,13 +31,14 @@ namespace EmailNotifications.Infrastructure.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<int>("AttemptCount")
+                        .HasColumnType("integer");
+
                     b.Property<string>("BccAddresses")
-                        .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)");
+                        .HasColumnType("text");
 
                     b.Property<string>("CcAddresses")
-                        .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)");
+                        .HasColumnType("text");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -45,18 +46,18 @@ namespace EmailNotifications.Infrastructure.Migrations
                     b.Property<string>("CreatedBy")
                         .HasColumnType("text");
 
+                    b.Property<int>("EmailSpecificationId")
+                        .HasColumnType("integer");
+
                     b.Property<string>("ErrorMessage")
-                        .HasMaxLength(4000)
-                        .HasColumnType("character varying(4000)");
+                        .HasColumnType("text");
 
                     b.Property<string>("FromAddress")
                         .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)");
+                        .HasColumnType("text");
 
                     b.Property<string>("FromName")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                        .HasColumnType("text");
 
                     b.Property<DateTime>("LastModifiedAt")
                         .HasColumnType("timestamp with time zone");
@@ -64,34 +65,36 @@ namespace EmailNotifications.Infrastructure.Migrations
                     b.Property<string>("LastModifiedBy")
                         .HasColumnType("text");
 
+                    b.Property<DateTime?>("NextAttemptAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<int>("NotificationType")
                         .HasColumnType("integer");
 
                     b.Property<DateTime?>("SentAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("SerializedModel")
+                        .HasColumnType("text");
+
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
                     b.Property<string>("Subject")
                         .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
+                        .HasColumnType("text");
 
-                    b.Property<string>("ToAddress")
+                    b.Property<string>("ToAddresses")
                         .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)");
-
-                    b.Property<string>("ToName")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                        .HasColumnType("text");
 
                     b.HasKey("Id");
 
                     b.HasIndex("CreatedAt");
 
-                    b.HasIndex("NotificationType");
+                    b.HasIndex("EmailSpecificationId");
+
+                    b.HasIndex("NextAttemptAt");
 
                     b.HasIndex("SentAt");
 
@@ -259,6 +262,17 @@ namespace EmailNotifications.Infrastructure.Migrations
                         .IsUnique();
 
                     b.ToTable("EmailSpecifications", "notification");
+                });
+
+            modelBuilder.Entity("EmailNotifications.Domain.Entities.EmailLog", b =>
+                {
+                    b.HasOne("EmailNotifications.Domain.Entities.EmailSpecification", "EmailSpecification")
+                        .WithMany()
+                        .HasForeignKey("EmailSpecificationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("EmailSpecification");
                 });
 
             modelBuilder.Entity("EmailNotifications.Domain.Entities.EmailRecipient", b =>
