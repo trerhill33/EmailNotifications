@@ -25,12 +25,52 @@ public enum NotificationType
     FedExWeeklyChargesSummary = 4,
 
     /// <summary>
-    /// FedEx monthly delivery performance report
+    /// FedEx weekly detail charges summary report
     /// </summary>
-    FedExMonthlyDeliveryPerformance = 5,
+    FedExWeeklyDetailChargesSummary = 5,
 
     /// <summary>
-    /// FedEx quarterly cost analysis report
+    /// FedEx remittance summary report
     /// </summary>
-    FedExQuarterlyCostAnalysis = 6
+    FedExRemittanceSummary = 6,
+
+    /// <summary>
+    /// FedEx remittance details report
+    /// </summary>
+    FedExRemittanceDetails = 7,
+
+    /// <summary>
+    /// FedEx file receipt notification
+    /// </summary>
+    FedExFileReceipt = 8,
+
+    /// <summary>
+    /// FedEx file missing notification
+    /// </summary>
+    FedExFileMissing = 9,
+
+    /// <summary>
+    /// Daily reassigned tracking numbers report
+    /// </summary>
+    DailyReassignedTrackingNumbers = 10,
+
+    /// <summary>
+    /// Delayed invoices report
+    /// </summary>
+    DelayedInvoicesReport = 11,
+
+    /// <summary>
+    /// Pending approval notification
+    /// </summary>
+    PendingApprovalNotification = 12,
+
+    /// <summary>
+    /// Weekly tracking numbers by business unit report
+    /// </summary>
+    WeeklyTrackingByBusinessUnit = 13,
+
+    /// <summary>
+    /// Invalid employee ID summary report
+    /// </summary>
+    InvalidEmployeeIdSummary = 14
 } 

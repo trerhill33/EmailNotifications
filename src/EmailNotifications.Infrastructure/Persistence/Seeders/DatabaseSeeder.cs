@@ -159,16 +159,16 @@ public class DatabaseSeeder(NotificationDbContext context, ILogger<DatabaseSeede
                 },
                 new EmailSpecification
                 {
-                    NotificationType = NotificationType.FedExMonthlyDeliveryPerformance,
-                    Name = "FedEx Monthly Delivery Performance",
-                    Subject = "FedEx Monthly Delivery Performance Report",
+                    NotificationType = NotificationType.FedExWeeklyDetailChargesSummary,
+                    Name = "FedEx Weekly Detail Charges Summary",
+                    Subject = "FedEx Weekly Detail Charges Summary Report",
                     HtmlBody = @"
                         <div class='content'>
                             <h1>{{ report_title }}</h1>
                             <p>Date Range: {{ date_range }}</p>
                             <p>Total Shipments: {{ total_shipments }}</p>
                             <p>Total Cost: ${{ total_cost }}</p>
-                            <p>Please find the detailed performance report attached to this email.</p>
+                            <p>Please find the detailed charges report attached to this email.</p>
                             <p>Best regards,<br>The Logistics Team</p>
                         </div>",
                     TextBody = @"
@@ -178,7 +178,7 @@ public class DatabaseSeeder(NotificationDbContext context, ILogger<DatabaseSeede
                         Total Shipments: {{ total_shipments }}
                         Total Cost: ${{ total_cost }}
 
-                        Please find the detailed performance report attached to this email.
+                        Please find the detailed charges report attached to this email.
 
                         Best regards,
                         The Logistics Team",
@@ -189,31 +189,273 @@ public class DatabaseSeeder(NotificationDbContext context, ILogger<DatabaseSeede
                 },
                 new EmailSpecification
                 {
-                    NotificationType = NotificationType.FedExQuarterlyCostAnalysis,
-                    Name = "FedEx Quarterly Cost Analysis",
-                    Subject = "FedEx Quarterly Cost Analysis Report",
+                    NotificationType = NotificationType.FedExRemittanceSummary,
+                    Name = "FedEx Remittance Summary",
+                    Subject = "FedEx Remittance Summary Report",
                     HtmlBody = @"
                         <div class='content'>
                             <h1>{{ report_title }}</h1>
                             <p>Date Range: {{ date_range }}</p>
-                            <p>Total Shipments: {{ total_shipments }}</p>
-                            <p>Total Cost: ${{ total_cost }}</p>
-                            <p>Please find the detailed cost analysis report attached to this email.</p>
+                            <p>Total Remittance: ${{ total_remittance }}</p>
+                            <p>Please find the remittance summary attached to this email.</p>
                             <p>Best regards,<br>The Logistics Team</p>
                         </div>",
                     TextBody = @"
                         {{ report_title }}
 
                         Date Range: {{ date_range }}
-                        Total Shipments: {{ total_shipments }}
-                        Total Cost: ${{ total_cost }}
+                        Total Remittance: ${{ total_remittance }}
 
-                        Please find the detailed cost analysis report attached to this email.
+                        Please find the remittance summary attached to this email.
 
                         Best regards,
                         The Logistics Team",
                     FromAddress = "logistics@example.com",
                     FromName = "FedEx Reporting System",
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow
+                },
+                new EmailSpecification
+                {
+                    NotificationType = NotificationType.FedExRemittanceDetails,
+                    Name = "FedEx Remittance Details",
+                    Subject = "FedEx Remittance Details Report",
+                    HtmlBody = @"
+                        <div class='content'>
+                            <h1>{{ report_title }}</h1>
+                            <p>Date Range: {{ date_range }}</p>
+                            <p>Total Remittance: ${{ total_remittance }}</p>
+                            <p>Please find the detailed remittance report attached to this email.</p>
+                            <p>Best regards,<br>The Logistics Team</p>
+                        </div>",
+                    TextBody = @"
+                        {{ report_title }}
+
+                        Date Range: {{ date_range }}
+                        Total Remittance: ${{ total_remittance }}
+
+                        Please find the detailed remittance report attached to this email.
+
+                        Best regards,
+                        The Logistics Team",
+                    FromAddress = "logistics@example.com",
+                    FromName = "FedEx Reporting System",
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow
+                },
+                new EmailSpecification
+                {
+                    NotificationType = NotificationType.FedExFileReceipt,
+                    Name = "FedEx File Receipt",
+                    Subject = "FedEx File Received and Processed",
+                    HtmlBody = @"
+                        <div class='content'>
+                            <h1>FedEx File Processing Complete</h1>
+                            <p>Dear Logistics Team,</p>
+                            <p>The FedEx file has been successfully received and processed.</p>
+                            <p>File Details:</p>
+                            <ul>
+                                <li>File Name: {{ file_name }}</li>
+                                <li>Received Date: {{ received_date }}</li>
+                                <li>Processed Date: {{ processed_date }}</li>
+                            </ul>
+                            <p>Best regards,<br>The System</p>
+                        </div>",
+                    TextBody = @"
+                        FedEx File Processing Complete
+
+                        Dear Logistics Team,
+
+                        The FedEx file has been successfully received and processed.
+
+                        File Details:
+                        - File Name: {{ file_name }}
+                        - Received Date: {{ received_date }}
+                        - Processed Date: {{ processed_date }}
+
+                        Best regards,
+                        The System",
+                    FromAddress = "system@example.com",
+                    FromName = "FedEx Processing System",
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow
+                },
+                new EmailSpecification
+                {
+                    NotificationType = NotificationType.FedExFileMissing,
+                    Name = "FedEx File Missing",
+                    Subject = "FedEx File Not Received",
+                    HtmlBody = @"
+                        <div class='content'>
+                            <h1>FedEx File Missing Alert</h1>
+                            <p>Dear Logistics Team,</p>
+                            <p>The expected FedEx file has not been received.</p>
+                            <p>Expected File Details:</p>
+                            <ul>
+                                <li>Expected Date: {{ expected_date }}</li>
+                                <li>File Type: {{ file_type }}</li>
+                            </ul>
+                            <p>Please investigate this issue.</p>
+                            <p>Best regards,<br>The System</p>
+                        </div>",
+                    TextBody = @"
+                        FedEx File Missing Alert
+
+                        Dear Logistics Team,
+
+                        The expected FedEx file has not been received.
+
+                        Expected File Details:
+                        - Expected Date: {{ expected_date }}
+                        - File Type: {{ file_type }}
+
+                        Please investigate this issue.
+
+                        Best regards,
+                        The System",
+                    FromAddress = "system@example.com",
+                    FromName = "FedEx Processing System",
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow
+                },
+                new EmailSpecification
+                {
+                    NotificationType = NotificationType.DailyReassignedTrackingNumbers,
+                    Name = "Daily Reassigned Tracking Numbers",
+                    Subject = "Daily Reassigned Tracking Numbers Report",
+                    HtmlBody = @"
+                        <div class='content'>
+                            <h1>{{ report_title }}</h1>
+                            <p>Date: {{ report_date }}</p>
+                            <p>Total Reassigned: {{ total_reassigned }}</p>
+                            <p>Please find the detailed report attached to this email.</p>
+                            <p>Best regards,<br>The Logistics Team</p>
+                        </div>",
+                    TextBody = @"
+                        {{ report_title }}
+
+                        Date: {{ report_date }}
+                        Total Reassigned: {{ total_reassigned }}
+
+                        Please find the detailed report attached to this email.
+
+                        Best regards,
+                        The Logistics Team",
+                    FromAddress = "logistics@example.com",
+                    FromName = "FedEx Reporting System",
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow
+                },
+                new EmailSpecification
+                {
+                    NotificationType = NotificationType.DelayedInvoicesReport,
+                    Name = "Delayed Invoices Report",
+                    Subject = "Delayed Invoices Report",
+                    HtmlBody = @"
+                        <div class='content'>
+                            <h1>{{ report_title }}</h1>
+                            <p>Date: {{ report_date }}</p>
+                            <p>Total Delayed Invoices: {{ total_delayed }}</p>
+                            <p>Please find the detailed report attached to this email.</p>
+                            <p>Best regards,<br>The Finance Team</p>
+                        </div>",
+                    TextBody = @"
+                        {{ report_title }}
+
+                        Date: {{ report_date }}
+                        Total Delayed Invoices: {{ total_delayed }}
+
+                        Please find the detailed report attached to this email.
+
+                        Best regards,
+                        The Finance Team",
+                    FromAddress = "finance@example.com",
+                    FromName = "Finance Reporting System",
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow
+                },
+                new EmailSpecification
+                {
+                    NotificationType = NotificationType.PendingApprovalNotification,
+                    Name = "Pending Approval Notification",
+                    Subject = "Pending Approval Required",
+                    HtmlBody = @"
+                        <div class='content'>
+                            <h1>Pending Approval Required</h1>
+                            <p>Dear {{ approver_name }},</p>
+                            <p>You have {{ pending_count }} items awaiting your approval.</p>
+                            <p>Please review and process these items at your earliest convenience.</p>
+                            <p>Best regards,<br>The System</p>
+                        </div>",
+                    TextBody = @"
+                        Pending Approval Required
+
+                        Dear {{ approver_name }},
+
+                        You have {{ pending_count }} items awaiting your approval.
+
+                        Please review and process these items at your earliest convenience.
+
+                        Best regards,
+                        The System",
+                    FromAddress = "system@example.com",
+                    FromName = "Approval System",
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow
+                },
+                new EmailSpecification
+                {
+                    NotificationType = NotificationType.WeeklyTrackingByBusinessUnit,
+                    Name = "Weekly Tracking By Business Unit",
+                    Subject = "Weekly Tracking Numbers By Business Unit Report",
+                    HtmlBody = @"
+                        <div class='content'>
+                            <h1>{{ report_title }}</h1>
+                            <p>Date Range: {{ date_range }}</p>
+                            <p>Total Business Units: {{ total_business_units }}</p>
+                            <p>Please find the detailed report attached to this email.</p>
+                            <p>Best regards,<br>The Logistics Team</p>
+                        </div>",
+                    TextBody = @"
+                        {{ report_title }}
+
+                        Date Range: {{ date_range }}
+                        Total Business Units: {{ total_business_units }}
+
+                        Please find the detailed report attached to this email.
+
+                        Best regards,
+                        The Logistics Team",
+                    FromAddress = "logistics@example.com",
+                    FromName = "FedEx Reporting System",
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow
+                },
+                new EmailSpecification
+                {
+                    NotificationType = NotificationType.InvalidEmployeeIdSummary,
+                    Name = "Invalid Employee ID Summary",
+                    Subject = "Invalid Employee ID Summary Report",
+                    HtmlBody = @"
+                        <div class='content'>
+                            <h1>{{ report_title }}</h1>
+                            <p>Date: {{ report_date }}</p>
+                            <p>Total Invalid IDs: {{ total_invalid_ids }}</p>
+                            <p>Please find the detailed report attached to this email.</p>
+                            <p>Best regards,<br>The HR Team</p>
+                        </div>",
+                    TextBody = @"
+                        {{ report_title }}
+
+                        Date: {{ report_date }}
+                        Total Invalid IDs: {{ total_invalid_ids }}
+
+                        Please find the detailed report attached to this email.
+
+                        Best regards,
+                        The HR Team",
+                    FromAddress = "hr@example.com",
+                    FromName = "HR Reporting System",
                     IsActive = true,
                     CreatedAt = DateTime.UtcNow
                 }
@@ -279,130 +521,6 @@ public class DatabaseSeeder(NotificationDbContext context, ILogger<DatabaseSeede
         {
             logger.LogError(ex, "Error seeding database");
             throw;
-        }
-    }
-
-    public async Task SeedWelcomeAndPasswordResetTemplates()
-    {
-        var welcomeTemplate = new EmailSpecification
-        {
-            Name = "Welcome Email",
-            NotificationType = NotificationType.Welcome,
-            Subject = "Welcome to Our Platform!",
-            HtmlBody = @"<div class='content'>
-                <h1>Welcome to Our Platform!</h1>
-                <p>Dear {{ first_name }} {{ last_name }},</p>
-                <p>Thank you for joining our platform. We're excited to have you on board!</p>
-                <p>Your account has been successfully created on {{ formatted_date }}.</p>
-                <p>Best regards,<br>The Team</p>
-            </div>",
-            TextBody = "Welcome to Our Platform!\n\nDear {{ first_name }} {{ last_name }},\n\nThank you for joining our platform. We're excited to have you on board!\n\nYour account has been successfully created on {{ formatted_date }}.\n\nBest regards,\nThe Team",
-            FromAddress = "noreply@example.com",
-            FromName = "Our Platform",
-            Priority = 3,
-            IsActive = true,
-            CreatedAt = DateTime.UtcNow,
-            CreatedBy = "System",
-            LastModifiedAt = DateTime.UtcNow,
-            LastModifiedBy = "System"
-        };
-
-        var passwordResetTemplate = new EmailSpecification
-        {
-            Name = "Password Reset",
-            NotificationType = NotificationType.PasswordReset,
-            Subject = "Password Reset Request",
-            HtmlBody = @"<div class='content'>
-                <h1>Password Reset Request</h1>
-                <p>Dear {{ first_name }},</p>
-                <p>We received a request to reset your password. Your one-time password is: {{ one_time_password }}</p>
-                <p>This password will expire at: {{ expiry_time_formatted }}</p>
-                <p>If you didn't request this, please ignore this email.</p>
-                <p>Best regards,<br>The Team</p>
-            </div>",
-            TextBody = "Password Reset Request\n\nDear {{ first_name }},\n\nWe received a request to reset your password. Your one-time password is: {{ one_time_password }}\n\nThis password will expire at: {{ expiry_time_formatted }}\n\nIf you didn't request this, please ignore this email.\n\nBest regards,\nThe Team",
-            FromAddress = "noreply@example.com",
-            FromName = "Our Platform",
-            Priority = 1,
-            IsActive = true,
-            CreatedAt = DateTime.UtcNow,
-            CreatedBy = "System",
-            LastModifiedAt = DateTime.UtcNow,
-            LastModifiedBy = "System"
-        };
-
-        var fedExWeeklyTemplate = new EmailSpecification
-        {
-            Name = "FedEx Weekly Charges Summary",
-            NotificationType = NotificationType.FedExWeeklyChargesSummary,
-            Subject = "FedEx Weekly Charges Summary Report",
-            HtmlBody = @"<div class='content'>
-                <h1>{{ report_title }}</h1>
-                <p>Date Range: {{ date_range }}</p>
-                <p>Total Shipments: {{ total_shipments }}</p>
-                <p>Total Cost: ${{ total_cost }}</p>
-                <p>Please find the detailed report attached to this email.</p>
-                <p>Best regards,<br>The Logistics Team</p>
-            </div>",
-            TextBody = "{{ report_title }}\n\nDate Range: {{ date_range }}\nTotal Shipments: {{ total_shipments }}\nTotal Cost: ${{ total_cost }}\n\nPlease find the detailed report attached to this email.\n\nBest regards,\nThe Logistics Team",
-            FromAddress = "logistics@example.com",
-            FromName = "FedEx Reporting System",
-            Priority = 2,
-            IsActive = true,
-            CreatedAt = DateTime.UtcNow,
-            CreatedBy = "System",
-            LastModifiedAt = DateTime.UtcNow,
-            LastModifiedBy = "System"
-        };
-
-        var fedExMonthlyTemplate = new EmailSpecification
-        {
-            Name = "FedEx Monthly Delivery Performance",
-            NotificationType = NotificationType.FedExMonthlyDeliveryPerformance,
-            Subject = "FedEx Monthly Delivery Performance Report",
-            HtmlBody = @"<div class='content'>
-                <h1>{{ report_title }}</h1>
-                <p>Date Range: {{ date_range }}</p>
-                <p>Total Shipments: {{ total_shipments }}</p>
-                <p>Total Cost: ${{ total_cost }}</p>
-                <p>Please find the detailed performance report attached to this email.</p>
-                <p>Best regards,<br>The Logistics Team</p>
-            </div>",
-            TextBody = "{{ report_title }}\n\nDate Range: {{ date_range }}\nTotal Shipments: {{ total_shipments }}\nTotal Cost: ${{ total_cost }}\n\nPlease find the detailed performance report attached to this email.\n\nBest regards,\nThe Logistics Team",
-            FromAddress = "logistics@example.com",
-            FromName = "FedEx Reporting System",
-            Priority = 2,
-            IsActive = true,
-            CreatedAt = DateTime.UtcNow,
-            CreatedBy = "System",
-            LastModifiedAt = DateTime.UtcNow,
-            LastModifiedBy = "System"
-        };
-
-        // Check if templates already exist
-        var existingWelcomeTemplate = await specificationRepository.GetByNotificationTypeAsync(NotificationType.Welcome);
-        var existingPasswordResetTemplate = await specificationRepository.GetByNotificationTypeAsync(NotificationType.PasswordReset);
-        var existingFedExWeeklyTemplate = await specificationRepository.GetByNotificationTypeAsync(NotificationType.FedExWeeklyChargesSummary);
-        var existingFedExMonthlyTemplate = await specificationRepository.GetByNotificationTypeAsync(NotificationType.FedExMonthlyDeliveryPerformance);
-
-        if (existingWelcomeTemplate == null)
-        {
-            await specificationRepository.AddAsync(welcomeTemplate);
-        }
-
-        if (existingPasswordResetTemplate == null)
-        {
-            await specificationRepository.AddAsync(passwordResetTemplate);
-        }
-
-        if (existingFedExWeeklyTemplate == null)
-        {
-            await specificationRepository.AddAsync(fedExWeeklyTemplate);
-        }
-
-        if (existingFedExMonthlyTemplate == null)
-        {
-            await specificationRepository.AddAsync(fedExMonthlyTemplate);
         }
     }
 } 

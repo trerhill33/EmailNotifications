@@ -45,7 +45,6 @@ public static class DependencyInjection
 
         // Add application services
         services.AddScoped<INotificationService, NotificationService>();
-        services.AddScoped<FedExReportService>();
 
         // Register the database seeder
         services.AddScoped<DatabaseSeeder>();
