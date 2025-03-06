@@ -2,9 +2,6 @@ using System;
 
 namespace EmailNotifications.Domain.Enums;
 
-/// <summary>
-/// Represents the type of notification being sent
-/// </summary>
 public enum NotificationType
 {
     /// <summary>
