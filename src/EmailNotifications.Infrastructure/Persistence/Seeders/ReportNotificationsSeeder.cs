@@ -407,6 +407,7 @@ public class ReportNotificationsSeeder(NotificationDbContext db, ILogger<ReportN
         return group;
     }
 
+    //
     private async Task AddRecipientsToGroupAsync(int groupId, IEnumerable<(string EmailAddress, string DisplayName, RecipientType Type)> recipients)
     {
         var emailRecipients = recipients.Select(r => new EmailRecipient
