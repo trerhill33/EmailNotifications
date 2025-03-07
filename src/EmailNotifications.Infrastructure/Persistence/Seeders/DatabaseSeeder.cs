@@ -135,18 +135,11 @@ public class DatabaseSeeder(NotificationDbContext context, ILogger<DatabaseSeede
                     HtmlBody = @"
                         <div class='content'>
                             <h1>{{ report_title }}</h1>
-                            <p>Date Range: {{ date_range }}</p>
-                            <p>Total Shipments: {{ total_shipments }}</p>
-                            <p>Total Cost: ${{ total_cost }}</p>
                             <p>Please find the detailed report attached to this email.</p>
                             <p>Best regards,<br>The Logistics Team</p>
                         </div>",
                     TextBody = @"
                         {{ report_title }}
-
-                        Date Range: {{ date_range }}
-                        Total Shipments: {{ total_shipments }}
-                        Total Cost: ${{ total_cost }}
 
                         Please find the detailed report attached to this email.
 
@@ -165,21 +158,12 @@ public class DatabaseSeeder(NotificationDbContext context, ILogger<DatabaseSeede
                     HtmlBody = @"
                         <div class='content'>
                             <h1>{{ report_title }}</h1>
-                            <p>Date Range: {{ date_range }}</p>
-                            <p>Total Shipments: {{ total_shipments }}</p>
-                            <p>Total Cost: ${{ total_cost }}</p>
                             <p>Please find the detailed charges report attached to this email.</p>
                             <p>Best regards,<br>The Logistics Team</p>
                         </div>",
                     TextBody = @"
                         {{ report_title }}
-
-                        Date Range: {{ date_range }}
-                        Total Shipments: {{ total_shipments }}
-                        Total Cost: ${{ total_cost }}
-
                         Please find the detailed charges report attached to this email.
-
                         Best regards,
                         The Logistics Team",
                     FromAddress = "logistics@example.com",
@@ -195,8 +179,6 @@ public class DatabaseSeeder(NotificationDbContext context, ILogger<DatabaseSeede
                     HtmlBody = @"
                         <div class='content'>
                             <h1>{{ report_title }}</h1>
-                            <p>Date Range: {{ date_range }}</p>
-                            <p>Total Remittance: ${{ total_remittance }}</p>
                             <p>Please find the remittance summary attached to this email.</p>
                             <p>Best regards,<br>The Logistics Team</p>
                         </div>",
@@ -223,16 +205,11 @@ public class DatabaseSeeder(NotificationDbContext context, ILogger<DatabaseSeede
                     HtmlBody = @"
                         <div class='content'>
                             <h1>{{ report_title }}</h1>
-                            <p>Date Range: {{ date_range }}</p>
-                            <p>Total Remittance: ${{ total_remittance }}</p>
                             <p>Please find the detailed remittance report attached to this email.</p>
                             <p>Best regards,<br>The Logistics Team</p>
                         </div>",
                     TextBody = @"
                         {{ report_title }}
-
-                        Date Range: {{ date_range }}
-                        Total Remittance: ${{ total_remittance }}
 
                         Please find the detailed remittance report attached to this email.
 
@@ -251,14 +228,6 @@ public class DatabaseSeeder(NotificationDbContext context, ILogger<DatabaseSeede
                     HtmlBody = @"
                         <div class='content'>
                             <h1>FedEx File Processing Complete</h1>
-                            <p>Dear Logistics Team,</p>
-                            <p>The FedEx file has been successfully received and processed.</p>
-                            <p>File Details:</p>
-                            <ul>
-                                <li>File Name: {{ file_name }}</li>
-                                <li>Received Date: {{ received_date }}</li>
-                                <li>Processed Date: {{ processed_date }}</li>
-                            </ul>
                             <p>Best regards,<br>The System</p>
                         </div>",
                     TextBody = @"
@@ -267,11 +236,6 @@ public class DatabaseSeeder(NotificationDbContext context, ILogger<DatabaseSeede
                         Dear Logistics Team,
 
                         The FedEx file has been successfully received and processed.
-
-                        File Details:
-                        - File Name: {{ file_name }}
-                        - Received Date: {{ received_date }}
-                        - Processed Date: {{ processed_date }}
 
                         Best regards,
                         The System",
@@ -288,13 +252,6 @@ public class DatabaseSeeder(NotificationDbContext context, ILogger<DatabaseSeede
                     HtmlBody = @"
                         <div class='content'>
                             <h1>FedEx File Missing Alert</h1>
-                            <p>Dear Logistics Team,</p>
-                            <p>The expected FedEx file has not been received.</p>
-                            <p>Expected File Details:</p>
-                            <ul>
-                                <li>Expected Date: {{ expected_date }}</li>
-                                <li>File Type: {{ file_type }}</li>
-                            </ul>
                             <p>Please investigate this issue.</p>
                             <p>Best regards,<br>The System</p>
                         </div>",
@@ -304,10 +261,6 @@ public class DatabaseSeeder(NotificationDbContext context, ILogger<DatabaseSeede
                         Dear Logistics Team,
 
                         The expected FedEx file has not been received.
-
-                        Expected File Details:
-                        - Expected Date: {{ expected_date }}
-                        - File Type: {{ file_type }}
 
                         Please investigate this issue.
 
@@ -326,16 +279,11 @@ public class DatabaseSeeder(NotificationDbContext context, ILogger<DatabaseSeede
                     HtmlBody = @"
                         <div class='content'>
                             <h1>{{ report_title }}</h1>
-                            <p>Date: {{ report_date }}</p>
-                            <p>Total Reassigned: {{ total_reassigned }}</p>
                             <p>Please find the detailed report attached to this email.</p>
                             <p>Best regards,<br>The Logistics Team</p>
                         </div>",
                     TextBody = @"
                         {{ report_title }}
-
-                        Date: {{ report_date }}
-                        Total Reassigned: {{ total_reassigned }}
 
                         Please find the detailed report attached to this email.
 
@@ -354,16 +302,11 @@ public class DatabaseSeeder(NotificationDbContext context, ILogger<DatabaseSeede
                     HtmlBody = @"
                         <div class='content'>
                             <h1>{{ report_title }}</h1>
-                            <p>Date: {{ report_date }}</p>
-                            <p>Total Delayed Invoices: {{ total_delayed }}</p>
                             <p>Please find the detailed report attached to this email.</p>
                             <p>Best regards,<br>The Finance Team</p>
                         </div>",
                     TextBody = @"
                         {{ report_title }}
-
-                        Date: {{ report_date }}
-                        Total Delayed Invoices: {{ total_delayed }}
 
                         Please find the detailed report attached to this email.
 
@@ -381,18 +324,11 @@ public class DatabaseSeeder(NotificationDbContext context, ILogger<DatabaseSeede
                     Subject = "Pending Approval Required",
                     HtmlBody = @"
                         <div class='content'>
-                            <h1>Pending Approval Required</h1>
-                            <p>Dear {{ approver_name }},</p>
-                            <p>You have {{ pending_count }} items awaiting your approval.</p>
                             <p>Please review and process these items at your earliest convenience.</p>
                             <p>Best regards,<br>The System</p>
                         </div>",
                     TextBody = @"
                         Pending Approval Required
-
-                        Dear {{ approver_name }},
-
-                        You have {{ pending_count }} items awaiting your approval.
 
                         Please review and process these items at your earliest convenience.
 
@@ -411,16 +347,11 @@ public class DatabaseSeeder(NotificationDbContext context, ILogger<DatabaseSeede
                     HtmlBody = @"
                         <div class='content'>
                             <h1>{{ report_title }}</h1>
-                            <p>Date Range: {{ date_range }}</p>
-                            <p>Total Business Units: {{ total_business_units }}</p>
                             <p>Please find the detailed report attached to this email.</p>
                             <p>Best regards,<br>The Logistics Team</p>
                         </div>",
                     TextBody = @"
                         {{ report_title }}
-
-                        Date Range: {{ date_range }}
-                        Total Business Units: {{ total_business_units }}
 
                         Please find the detailed report attached to this email.
 
@@ -439,16 +370,11 @@ public class DatabaseSeeder(NotificationDbContext context, ILogger<DatabaseSeede
                     HtmlBody = @"
                         <div class='content'>
                             <h1>{{ report_title }}</h1>
-                            <p>Date: {{ report_date }}</p>
-                            <p>Total Invalid IDs: {{ total_invalid_ids }}</p>
                             <p>Please find the detailed report attached to this email.</p>
                             <p>Best regards,<br>The HR Team</p>
                         </div>",
                     TextBody = @"
                         {{ report_title }}
-
-                        Date: {{ report_date }}
-                        Total Invalid IDs: {{ total_invalid_ids }}
 
                         Please find the detailed report attached to this email.
 

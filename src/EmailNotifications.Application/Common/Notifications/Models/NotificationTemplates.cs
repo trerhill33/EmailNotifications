@@ -1,3 +1,4 @@
+using EmailNotifications.Application.Common.Notifications.Interfaces;
 using EmailNotifications.Domain.Enums;
 
 namespace EmailNotifications.Application.Common.Notifications.Models;
@@ -12,19 +13,21 @@ public static class NotificationTemplates
     public static NotificationRequest<CreateUserTemplateModel> UserCreated(
         string firstName, 
         string lastName, 
-        string formattedDate)
+        string formattedDate,
+        IReadOnlyCollection<IAttachment>? attachments = null)
     {
         var model = new CreateUserTemplateModel(firstName, lastName, formattedDate);
-        return new NotificationRequest<CreateUserTemplateModel>(NotificationType.NewUser, model);
+        return new NotificationRequest<CreateUserTemplateModel>(NotificationType.NewUser, model, attachments);
     }
 
     public static NotificationRequest<ResetPasswordTemplateModel> PasswordReset(
         string firstName, 
         string oneTimePassword,
-        string expiryTimeFormatted)
+        string expiryTimeFormatted,
+        IReadOnlyCollection<IAttachment>? attachments = null)
     {
         var model = new ResetPasswordTemplateModel(firstName, oneTimePassword, expiryTimeFormatted);
-        return new NotificationRequest<ResetPasswordTemplateModel>(NotificationType.PasswordReset, model);
+        return new NotificationRequest<ResetPasswordTemplateModel>(NotificationType.PasswordReset, model, attachments);
     }
 
     // Weekly Report Notifications
@@ -32,99 +35,110 @@ public static class NotificationTemplates
         string reportTitle,
         string dateRange,
         int totalShipments,
-        decimal totalCost)
+        decimal totalCost,
+        IReadOnlyCollection<IAttachment>? attachments = null)
     {
         var model = new FedExWeeklyChargesSummaryModel(reportTitle, dateRange, totalShipments, totalCost);
-        return new NotificationRequest<FedExWeeklyChargesSummaryModel>(NotificationType.FedExWeeklyChargesSummary, model);
+        return new NotificationRequest<FedExWeeklyChargesSummaryModel>(NotificationType.FedExWeeklyChargesSummary, model, attachments);
     }
 
     public static NotificationRequest<FedExWeeklyDetailChargesSummaryModel> FedExWeeklyDetailChargesSummary(
         string reportTitle,
         string dateRange,
         int totalShipments,
-        decimal totalCost)
+        decimal totalCost,
+        IReadOnlyCollection<IAttachment>? attachments = null)
     {
         var model = new FedExWeeklyDetailChargesSummaryModel(reportTitle, dateRange, totalShipments, totalCost);
-        return new NotificationRequest<FedExWeeklyDetailChargesSummaryModel>(NotificationType.FedExWeeklyDetailChargesSummary, model);
+        return new NotificationRequest<FedExWeeklyDetailChargesSummaryModel>(NotificationType.FedExWeeklyDetailChargesSummary, model, attachments);
     }
 
     public static NotificationRequest<FedExFileReceiptModel> FedExFileReceipt(
         string fileName,
         string receivedDate,
-        string processedDate)
+        string processedDate,
+        IReadOnlyCollection<IAttachment>? attachments = null)
     {
         var model = new FedExFileReceiptModel(fileName, receivedDate, processedDate);
-        return new NotificationRequest<FedExFileReceiptModel>(NotificationType.FedExFileReceipt, model);
+        return new NotificationRequest<FedExFileReceiptModel>(NotificationType.FedExFileReceipt, model, attachments);
     }
 
     public static NotificationRequest<TrackingNumbersByBusinessUnitModel> TrackingNumbersByBusinessUnit(
         string reportTitle,
         string dateRange,
-        int totalBusinessUnits)
+        int totalBusinessUnits,
+        IReadOnlyCollection<IAttachment>? attachments = null)
     {
         var model = new TrackingNumbersByBusinessUnitModel(reportTitle, dateRange, totalBusinessUnits);
-        return new NotificationRequest<TrackingNumbersByBusinessUnitModel>(NotificationType.WeeklyTrackingByBusinessUnit, model);
+        return new NotificationRequest<TrackingNumbersByBusinessUnitModel>(NotificationType.WeeklyTrackingByBusinessUnit, model, attachments);
     }
 
     public static NotificationRequest<InvalidEmployeeIdModel> InvalidEmployeeId(
         string reportTitle,
         string reportDate,
-        int totalInvalidIds)
+        int totalInvalidIds,
+        IReadOnlyCollection<IAttachment>? attachments = null)
     {
         var model = new InvalidEmployeeIdModel(reportTitle, reportDate, totalInvalidIds);
-        return new NotificationRequest<InvalidEmployeeIdModel>(NotificationType.InvalidEmployeeIdSummary, model);
+        return new NotificationRequest<InvalidEmployeeIdModel>(NotificationType.InvalidEmployeeIdSummary, model, attachments);
     }
 
     // Daily Report Notifications
     public static NotificationRequest<FedExRemittanceSummaryModel> FedExRemittanceSummary(
         string reportTitle,
         string dateRange,
-        decimal totalRemittance)
+        decimal totalRemittance,
+        IReadOnlyCollection<IAttachment>? attachments = null)
     {
         var model = new FedExRemittanceSummaryModel(reportTitle, dateRange, totalRemittance);
-        return new NotificationRequest<FedExRemittanceSummaryModel>(NotificationType.FedExRemittanceSummary, model);
+        return new NotificationRequest<FedExRemittanceSummaryModel>(NotificationType.FedExRemittanceSummary, model, attachments);
     }
 
     public static NotificationRequest<FedExRemittanceDetailsModel> FedExRemittanceDetails(
         string reportTitle,
         string dateRange,
-        decimal totalRemittance)
+        decimal totalRemittance,
+        IReadOnlyCollection<IAttachment>? attachments = null)
     {
         var model = new FedExRemittanceDetailsModel(reportTitle, dateRange, totalRemittance);
-        return new NotificationRequest<FedExRemittanceDetailsModel>(NotificationType.FedExRemittanceDetails, model);
+        return new NotificationRequest<FedExRemittanceDetailsModel>(NotificationType.FedExRemittanceDetails, model, attachments);
     }
 
     public static NotificationRequest<FedExFileMissingModel> FedExFileMissing(
         string expectedDate,
-        string fileType)
+        string fileType,
+        IReadOnlyCollection<IAttachment>? attachments = null)
     {
         var model = new FedExFileMissingModel(expectedDate, fileType);
-        return new NotificationRequest<FedExFileMissingModel>(NotificationType.FedExFileMissing, model);
+        return new NotificationRequest<FedExFileMissingModel>(NotificationType.FedExFileMissing, model, attachments);
     }
 
     public static NotificationRequest<ReassignedTrackingNumbersModel> ReassignedTrackingNumbers(
         string reportTitle,
         string reportDate,
-        int totalReassigned)
+        int totalReassigned,
+        IReadOnlyCollection<IAttachment>? attachments = null)
     {
         var model = new ReassignedTrackingNumbersModel(reportTitle, reportDate, totalReassigned);
-        return new NotificationRequest<ReassignedTrackingNumbersModel>(NotificationType.DailyReassignedTrackingNumbers, model);
+        return new NotificationRequest<ReassignedTrackingNumbersModel>(NotificationType.DailyReassignedTrackingNumbers, model, attachments);
     }
 
     public static NotificationRequest<DelayedInvoicesModel> DelayedInvoices(
         string reportTitle,
         string reportDate,
-        int totalDelayed)
+        int totalDelayed,
+        IReadOnlyCollection<IAttachment>? attachments = null)
     {
         var model = new DelayedInvoicesModel(reportTitle, reportDate, totalDelayed);
-        return new NotificationRequest<DelayedInvoicesModel>(NotificationType.DelayedInvoicesReport, model);
+        return new NotificationRequest<DelayedInvoicesModel>(NotificationType.DelayedInvoicesReport, model, attachments);
     }
 
     public static NotificationRequest<PendingApprovalNotificationModel> PendingApproval(
         string approverName,
-        int pendingCount)
+        int pendingCount,
+        IReadOnlyCollection<IAttachment>? attachments = null)
     {
         var model = new PendingApprovalNotificationModel(approverName, pendingCount);
-        return new NotificationRequest<PendingApprovalNotificationModel>(NotificationType.PendingApprovalNotification, model);
+        return new NotificationRequest<PendingApprovalNotificationModel>(NotificationType.PendingApprovalNotification, model, attachments);
     }
 }

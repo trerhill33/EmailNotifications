@@ -2,7 +2,6 @@ using EmailNotifications.Application.Common.Notifications.Interfaces;
 using EmailNotifications.Application.Common.Notifications.Models;
 using EmailNotifications.Application.Reports.Models;
 using Microsoft.Extensions.Logging;
-using System.Text;
 
 namespace EmailNotifications.Application.Reports.Services;
 
@@ -69,34 +68,34 @@ public sealed class DailyReportService(
             // 1. Initialize the data model
             var model = new FedExRemittanceSummaryDto();
             
-            // 2-3. Query the database and process the data to populate the model
-            // TODO: Implement repository query and data processing
-            // This will be implemented when data sources are connected
+            // 2. Query the database for remittance summary data
+            // TODO: Implement repository query for remittance data
             
-            // 4. Generate CSV data in memory
-            var fileName = $"FedExRemittanceSummary_{DateTime.Now:yyyyMMdd}.csv";
-            var csvBuilder = new StringBuilder();
+            // 3. Process the data to populate the model
+            // TODO: Map repository data to model properties
             
-            // 5. Create notification request with in-memory attachment
+            // 4. Create notification request
             var request = NotificationTemplates.FedExRemittanceSummary(
                 reportTitle: "FedEx Daily Remittance Summary",
                 dateRange: DateTime.Now.ToString("yyyy-MM-dd"),
                 totalRemittance: 1250.75m  // This will come from model
             );
             
-            // Convert CSV string to byte array
-            var csvBytes = Encoding.UTF8.GetBytes(csvBuilder.ToString());
-            
-            // Add attachment to the request
-            request.AddAttachment(new CsvAttachment 
+            // 5. Send the notification
+            var result = await _notificationService.SendAsync(request, cancellationToken);
+
+            // 6. Log the result
+            if (result)
             {
-                FileName = fileName,
-                Content = csvBytes,
-                ContentType = "text/csv"
-            });
-            
-            // 6. Send the notification
-            return await _notificationService.SendAsync(request, cancellationToken);
+                _logger.LogInformation("FedEx Remittance Summary report sent successfully");
+            }
+            else
+            {
+                _logger.LogWarning("Failed to send FedEx Remittance Summary report");
+            }
+
+            // 7. Return the result
+            return result;
         }
         catch (Exception ex)
         {
@@ -117,34 +116,34 @@ public sealed class DailyReportService(
             // 1. Initialize the data model
             var model = new FedExRemittanceDetailsDto();
             
-            // 2-3. Query the database and process the data to populate the model
-            // TODO: Implement repository query and data processing
-            // This will be implemented when data sources are connected
+            // 2. Query the database for remittance details data
+            // TODO: Implement repository query for remittance details
             
-            // 4. Generate CSV data in memory
-            var fileName = $"FedExRemittanceDetails_{DateTime.Now:yyyyMMdd}.csv";
-            var csvBuilder = new StringBuilder();
+            // 3. Process the data to populate the model
+            // TODO: Map repository data to model properties
             
-            // 5. Create notification request with in-memory attachment
+            // 4. Create notification request
             var request = NotificationTemplates.FedExRemittanceDetails(
                 reportTitle: "FedEx Daily Remittance Details",
                 dateRange: DateTime.Now.ToString("yyyy-MM-dd"),
                 totalRemittance: 1250.75m  // This will come from model
             );
             
-            // Convert CSV string to byte array
-            var csvBytes = Encoding.UTF8.GetBytes(csvBuilder.ToString());
-            
-            // Add attachment to the request
-            request.AddAttachment(new CsvAttachment 
+            // 5. Send the notification
+            var result = await _notificationService.SendAsync(request, cancellationToken);
+
+            // 6. Log the result
+            if (result)
             {
-                FileName = fileName,
-                Content = csvBytes,
-                ContentType = "text/csv"
-            });
-            
-            // 6. Send the notification
-            return await _notificationService.SendAsync(request, cancellationToken);
+                _logger.LogInformation("FedEx Remittance Details report sent successfully");
+            }
+            else
+            {
+                _logger.LogWarning("Failed to send FedEx Remittance Details report");
+            }
+
+            // 7. Return the result
+            return result;
         }
         catch (Exception ex)
         {
@@ -165,9 +164,11 @@ public sealed class DailyReportService(
             // 1. Initialize the data model
             var model = new FedExFileMissingDto();
             
-            // 2-3. Query the database and process the data to populate the model
-            // TODO: Implement repository query and data processing
-            // This will be implemented when data sources are connected
+            // 2. Query the database to check for missing files
+            // TODO: Implement repository query for expected files
+            
+            // 3. Process the data to populate the model
+            // TODO: Map repository data to model properties
             
             // 4. Create notification request
             var request = NotificationTemplates.FedExFileMissing(
@@ -176,7 +177,20 @@ public sealed class DailyReportService(
             );
             
             // 5. Send the notification
-            return await _notificationService.SendAsync(request, cancellationToken);
+            var result = await _notificationService.SendAsync(request, cancellationToken);
+
+            // 6. Log the result
+            if (result)
+            {
+                _logger.LogInformation("FedEx File Missing notification sent successfully");
+            }
+            else
+            {
+                _logger.LogWarning("Failed to send FedEx File Missing notification");
+            }
+
+            // 7. Return the result
+            return result;
         }
         catch (Exception ex)
         {
@@ -186,7 +200,7 @@ public sealed class DailyReportService(
     }
 
     /// <summary>
-    /// Sends the report of reassigned tracking numbers
+    /// Sends a report of all tracking numbers reassigned to specific organizations
     /// </summary>
     public async Task<bool> SendReassignedTrackingNumbersReportAsync(CancellationToken cancellationToken = default)
     {
@@ -197,35 +211,34 @@ public sealed class DailyReportService(
             // 1. Initialize the data model
             var model = new ReassignedTrackingNumbersDto();
             
-            // 2-3. Query the database and process the data to populate the model
-            // TODO: Implement repository query and data processing
-            // This will be implemented when data sources are connected
+            // 2. Query the database for reassigned tracking numbers
+            // TODO: Implement repository query for tracking reassignments
             
-            // 4. Generate CSV data in memory
-            var fileName = $"ReassignedTrackingNumbers_{DateTime.Now:yyyyMMdd}.csv";
-            var csvBuilder = new StringBuilder();
+            // 3. Process the data to populate the model
+            // TODO: Map repository data to model properties
             
-            
-            // 5. Create notification request with in-memory attachment
+            // 4. Create notification request
             var request = NotificationTemplates.ReassignedTrackingNumbers(
-                reportTitle: "Daily Reassigned Tracking Numbers Report",
+                reportTitle: "Daily Reassigned Tracking Numbers",
                 reportDate: DateTime.Now.ToString("yyyy-MM-dd"),
-                totalReassigned: 3  // This will come from model
+                totalReassigned: 5  // This will come from model
             );
             
-            // Convert CSV string to byte array
-            var csvBytes = Encoding.UTF8.GetBytes(csvBuilder.ToString());
-            
-            // Add attachment to the request
-            request.AddAttachment(new CsvAttachment 
+            // 5. Send the notification
+            var result = await _notificationService.SendAsync(request, cancellationToken);
+
+            // 6. Log the result
+            if (result)
             {
-                FileName = fileName,
-                Content = csvBytes,
-                ContentType = "text/csv"
-            });
-            
-            // 6. Send the notification
-            return await _notificationService.SendAsync(request, cancellationToken);
+                _logger.LogInformation("Reassigned Tracking Numbers report sent successfully");
+            }
+            else
+            {
+                _logger.LogWarning("Failed to send Reassigned Tracking Numbers report");
+            }
+
+            // 7. Return the result
+            return result;
         }
         catch (Exception ex)
         {
@@ -235,7 +248,7 @@ public sealed class DailyReportService(
     }
 
     /// <summary>
-    /// Sends the report of delayed invoices
+    /// Sends a report of invoices that are delayed in processing (≥ 10 days after invoice date)
     /// </summary>
     public async Task<bool> SendDelayedInvoicesReportAsync(CancellationToken cancellationToken = default)
     {
@@ -246,34 +259,34 @@ public sealed class DailyReportService(
             // 1. Initialize the data model
             var model = new DelayedInvoicesDto();
             
-            // 2-3. Query the database and process the data to populate the model
-            // TODO: Implement repository query and data processing
-            // This will be implemented when data sources are connected
+            // 2. Query the database for delayed invoices
+            // TODO: Implement repository query for invoices with delay >= 10 days
             
-            // 4. Generate CSV data in memory
-            var fileName = $"DelayedInvoices_{DateTime.Now:yyyyMMdd}.csv";
-            var csvBuilder = new StringBuilder();
+            // 3. Process the data to populate the model
+            // TODO: Map repository data to model properties
             
-            // 5. Create notification request with in-memory attachment
+            // 4. Create notification request
             var request = NotificationTemplates.DelayedInvoices(
                 reportTitle: "Daily Delayed Invoices Report",
                 reportDate: DateTime.Now.ToString("yyyy-MM-dd"),
                 totalDelayed: 3  // This will come from model
             );
             
-            // Convert CSV string to byte array
-            var csvBytes = Encoding.UTF8.GetBytes(csvBuilder.ToString());
-            
-            // Add attachment to the request
-            request.AddAttachment(new CsvAttachment 
+            // 5. Send the notification
+            var result = await _notificationService.SendAsync(request, cancellationToken);
+
+            // 6. Log the result
+            if (result)
             {
-                FileName = fileName,
-                Content = csvBytes,
-                ContentType = "text/csv"
-            });
-            
-            // 6. Send the notification
-            return await _notificationService.SendAsync(request, cancellationToken);
+                _logger.LogInformation("Delayed Invoices report sent successfully");
+            }
+            else
+            {
+                _logger.LogWarning("Failed to send Delayed Invoices report");
+            }
+
+            // 7. Return the result
+            return result;
         }
         catch (Exception ex)
         {
@@ -283,7 +296,7 @@ public sealed class DailyReportService(
     }
 
     /// <summary>
-    /// Sends notifications for pending approvals
+    /// Sends notifications for batches that need approval
     /// </summary>
     public async Task<bool> SendPendingApprovalNotificationsAsync(CancellationToken cancellationToken = default)
     {
@@ -294,33 +307,33 @@ public sealed class DailyReportService(
             // 1. Initialize the data model
             var model = new PendingApprovalDto();
             
-            // 2-3. Query the database and process the data to populate the model
-            // TODO: Implement repository query and data processing
-            // This will be implemented when data sources are connected
+            // 2. Query the database for items pending approval
+            // TODO: Implement repository query for pending approvals
             
-            // 4. Generate CSV data in memory
-            var fileName = $"PendingApprovals_{DateTime.Now:yyyyMMdd}.csv";
-            var csvBuilder = new StringBuilder();
+            // 3. Process the data to populate the model
+            // TODO: Map repository data to model properties
             
-            // 5. Create notification request with in-memory attachment
+            // 4. Create notification request
             var request = NotificationTemplates.PendingApproval(
-                approverName: "Jane Approver",
-                pendingCount: 3  // This will come from model
+                approverName: "John Smith",  // This will come from model
+                pendingCount: 7  // This will come from model
             );
             
-            // Convert CSV string to byte array
-            var csvBytes = Encoding.UTF8.GetBytes(csvBuilder.ToString());
-            
-            // Add attachment to the request
-            request.AddAttachment(new CsvAttachment 
+            // 5. Send the notification
+            var result = await _notificationService.SendAsync(request, cancellationToken);
+
+            // 6. Log the result
+            if (result)
             {
-                FileName = fileName,
-                Content = csvBytes,
-                ContentType = "text/csv"
-            });
-            
-            // 6. Send the notification
-            return await _notificationService.SendAsync(request, cancellationToken);
+                _logger.LogInformation("Pending Approval notifications sent successfully");
+            }
+            else
+            {
+                _logger.LogWarning("Failed to send Pending Approval notifications");
+            }
+
+            // 7. Return the result
+            return result;
         }
         catch (Exception ex)
         {
@@ -328,4 +341,4 @@ public sealed class DailyReportService(
             return false;
         }
     }
-}
+} 

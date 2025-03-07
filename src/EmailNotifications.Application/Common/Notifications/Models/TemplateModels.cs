@@ -5,13 +5,13 @@ namespace EmailNotifications.Application.Common.Notifications.Models;
 public sealed record CreateUserTemplateModel(
     string FirstName,
     string LastName,
-    string FormattedDate) : ITemplateModel;
+    string FormattedDate) : ITemplateDataModel;
 
 public sealed record ResetPasswordTemplateModel(
     string FirstName,
     string OneTimePassword,
-    string ExpiryTimeFormatted) : ITemplateModel;
+    string ExpiryTimeFormatted) : ITemplateDataModel;
 
 public sealed record PasswordChangedTemplateModel(
     string FirstName,
-    DateTime ChangeDate) : ITemplateModel;
+    DateTime ChangeDate) : ITemplateDataModel;

@@ -11,48 +11,44 @@ public interface INotificationRequest { }
 /// <summary>
 /// Represents a request to send a notification
 /// </summary>
-/// <typeparam name="T">The type of data to include in the notification</typeparam>
-public class NotificationRequest<T> where T : class, ITemplateModel
+public sealed record NotificationRequest<T> : INotificationRequest where T : ITemplateDataModel
 {
     /// <summary>
     /// Gets the notification type
     /// </summary>
     public NotificationType Type { get; }
-    
+
     /// <summary>
-    /// Gets the data to include in the notification
+    /// Gets the data model for the template
     /// </summary>
     public T Data { get; }
-    
+
     /// <summary>
-    /// Gets the attachments to include with the notification
+    /// Gets the collection of attachments for the notification
     /// </summary>
-    public List<IAttachment> Attachments { get; } = new();
-    
+    public IReadOnlyCollection<IAttachment> Attachments { get; } = Array.Empty<IAttachment>();
+
     /// <summary>
-    /// Creates a new notification request
+    /// Initializes a new instance of the <see cref="NotificationRequest{T}"/> class without attachments
     /// </summary>
     /// <param name="type">The notification type</param>
-    /// <param name="data">The data to include in the notification</param>
+    /// <param name="data">The data model for the template</param>
     public NotificationRequest(NotificationType type, T data)
     {
         Type = type;
-        Data = data ?? throw new ArgumentNullException(nameof(data));
+        Data = data;
     }
-    
+
     /// <summary>
-    /// Adds an attachment to the notification request
+    /// Initializes a new instance of the <see cref="NotificationRequest{T}"/> class with attachments
     /// </summary>
-    /// <param name="attachment">The attachment to add</param>
-    /// <returns>The updated notification request</returns>
-    public NotificationRequest<T> AddAttachment(IAttachment attachment)
+    /// <param name="type">The notification type</param>
+    /// <param name="data">The data model for the template</param>
+    /// <param name="attachments">The collection of attachments to include with the notification</param>
+    public NotificationRequest(NotificationType type, T data, IReadOnlyCollection<IAttachment> attachments)
     {
-        if (attachment == null)
-        {
-            throw new ArgumentNullException(nameof(attachment));
-        }
-        
-        Attachments.Add(attachment);
-        return this;
+        Type = type;
+        Data = data;
+        Attachments = attachments;
     }
 }

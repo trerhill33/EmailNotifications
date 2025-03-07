@@ -8,7 +8,7 @@ namespace EmailNotifications.Application.Common.Notifications.Models;
 /// </summary>
 public sealed record ReportTemplateModel(
     string ReportTitle,
-    string DateRange) : ITemplateModel;
+    string DateRange) : ITemplateDataModel;
 
 /// <summary>
 /// Model for FedEx weekly charges summary report
@@ -17,7 +17,7 @@ public sealed record FedExWeeklyChargesSummaryModel(
     string ReportTitle,
     string DateRange,
     int TotalShipments,
-    decimal TotalCost) : ITemplateModel;
+    decimal TotalCost) : ITemplateDataModel;
 
 /// <summary>
 /// Model for FedEx weekly detail charges summary report
@@ -26,7 +26,7 @@ public sealed record FedExWeeklyDetailChargesSummaryModel(
     string ReportTitle,
     string DateRange,
     int TotalShipments,
-    decimal TotalCost) : ITemplateModel;
+    decimal TotalCost) : ITemplateDataModel;
 
 /// <summary>
 /// Model for FedEx remittance summary report
@@ -34,15 +34,15 @@ public sealed record FedExWeeklyDetailChargesSummaryModel(
 public sealed record FedExRemittanceSummaryModel(
     string ReportTitle,
     string DateRange,
-    decimal TotalRemittance) : ITemplateModel;
+    decimal TotalRemittance) : ITemplateDataModel;
 
 /// <summary>
-/// Model for FedEx remittance details report
+/// Model for FedEx remittance details reportHey 
 /// </summary>
 public sealed record FedExRemittanceDetailsModel(
     string ReportTitle,
     string DateRange,
-    decimal TotalRemittance) : ITemplateModel;
+    decimal TotalRemittance) : ITemplateDataModel;
 
 /// <summary>
 /// Model for FedEx file receipt notification
@@ -50,14 +50,14 @@ public sealed record FedExRemittanceDetailsModel(
 public sealed record FedExFileReceiptModel(
     string FileName,
     string ReceivedDate,
-    string ProcessedDate) : ITemplateModel;
+    string ProcessedDate) : ITemplateDataModel;
 
 /// <summary>
 /// Model for FedEx file missing notification
 /// </summary>
 public sealed record FedExFileMissingModel(
     string ExpectedDate,
-    string FileType) : ITemplateModel;
+    string FileType) : ITemplateDataModel;
 
 /// <summary>
 /// Model for reassigned tracking numbers report
@@ -65,7 +65,7 @@ public sealed record FedExFileMissingModel(
 public sealed record ReassignedTrackingNumbersModel(
     string ReportTitle,
     string ReportDate,
-    int TotalReassigned) : ITemplateModel;
+    int TotalReassigned) : ITemplateDataModel;
 
 /// <summary>
 /// Model for delayed invoices report
@@ -73,14 +73,14 @@ public sealed record ReassignedTrackingNumbersModel(
 public sealed record DelayedInvoicesModel(
     string ReportTitle,
     string ReportDate,
-    int TotalDelayed) : ITemplateModel;
+    int TotalDelayed) : ITemplateDataModel;
 
 /// <summary>
 /// Model for pending approval notification
 /// </summary>
 public sealed record PendingApprovalNotificationModel(
     string ApproverName,
-    int PendingCount) : ITemplateModel;
+    int PendingCount) : ITemplateDataModel;
 
 /// <summary>
 /// Model for tracking numbers by business unit report
@@ -88,7 +88,7 @@ public sealed record PendingApprovalNotificationModel(
 public sealed record TrackingNumbersByBusinessUnitModel(
     string ReportTitle,
     string DateRange,
-    int TotalBusinessUnits) : ITemplateModel;
+    int TotalBusinessUnits) : ITemplateDataModel;
 
 /// <summary>
 /// Model for invalid employee ID summary report
@@ -96,4 +96,4 @@ public sealed record TrackingNumbersByBusinessUnitModel(
 public sealed record InvalidEmployeeIdModel(
     string ReportTitle,
     string ReportDate,
-    int TotalInvalidIds) : ITemplateModel; 
+    int TotalInvalidIds) : ITemplateDataModel; 

@@ -10,37 +10,25 @@ public class FileAttachment : IAttachment
     /// <summary>
     /// Gets the name of the file
     /// </summary>
-    public string FileName { get; }
+    public required string FileName  { get; init; }
     
     /// <summary>
     /// Gets the content of the file
     /// </summary>
-    public byte[] Content { get; }
+    public required byte[] Content  { get; init; }
     
     /// <summary>
     /// Gets the content type of the file
     /// </summary>
-    public string ContentType { get; }
+    public required string ContentType  { get; init; }
     
     /// <summary>
     /// Gets whether the attachment should be displayed inline
     /// </summary>
-    public bool IsInline { get; }
+    public bool IsInline  { get; init; }
     
     /// <summary>
     /// Gets the content ID for inline attachments
     /// </summary>
-    public string? ContentId { get; }
-    
-    /// <summary>
-    /// Creates a new file attachment
-    /// </summary>
-    public FileAttachment(string fileName, byte[] content, string contentType, bool isInline = false, string? contentId = null)
-    {
-        FileName = fileName;
-        Content = content;
-        ContentType = contentType;
-        IsInline = isInline;
-        ContentId = contentId;
-    }
+    public string? ContentId { get; init; }
 } 

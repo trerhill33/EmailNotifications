@@ -23,7 +23,7 @@ public class NotificationService(
     /// Processes and sends a notification request
     /// </summary>
     public async Task<bool> SendAsync<T>(NotificationRequest<T> request, CancellationToken cancellationToken = default)
-        where T : class, ITemplateModel
+        where T : class, ITemplateDataModel
     {
         ArgumentNullException.ThrowIfNull(request);
         ArgumentNullException.ThrowIfNull(request.Data);
