@@ -11,7 +11,8 @@ public interface INotificationRequest { }
 /// <summary>
 /// Represents a request to send a notification
 /// </summary>
-public sealed record NotificationRequest<T> : INotificationRequest where T : ITemplateModel
+/// <typeparam name="T">The type of data to include in the notification</typeparam>
+public class NotificationRequest<T> where T : class, ITemplateModel
 {
     /// <summary>
     /// Gets the notification type
@@ -19,23 +20,39 @@ public sealed record NotificationRequest<T> : INotificationRequest where T : ITe
     public NotificationType Type { get; }
     
     /// <summary>
-    /// Gets the data model for the template
+    /// Gets the data to include in the notification
     /// </summary>
     public T Data { get; }
     
     /// <summary>
-    /// Gets the collection of attachments for the notification
+    /// Gets the attachments to include with the notification
     /// </summary>
-    public IReadOnlyCollection<IAttachment> Attachments { get; init; } = Array.Empty<IAttachment>();
+    public List<IAttachment> Attachments { get; } = new();
     
     /// <summary>
-    /// Initializes a new instance of the <see cref="NotificationRequest{T}"/> class
+    /// Creates a new notification request
     /// </summary>
     /// <param name="type">The notification type</param>
-    /// <param name="data">The data model for the template</param>
+    /// <param name="data">The data to include in the notification</param>
     public NotificationRequest(NotificationType type, T data)
     {
         Type = type;
-        Data = data;
+        Data = data ?? throw new ArgumentNullException(nameof(data));
+    }
+    
+    /// <summary>
+    /// Adds an attachment to the notification request
+    /// </summary>
+    /// <param name="attachment">The attachment to add</param>
+    /// <returns>The updated notification request</returns>
+    public NotificationRequest<T> AddAttachment(IAttachment attachment)
+    {
+        if (attachment == null)
+        {
+            throw new ArgumentNullException(nameof(attachment));
+        }
+        
+        Attachments.Add(attachment);
+        return this;
     }
 }

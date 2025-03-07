@@ -1,5 +1,7 @@
+using System.Text;
 using EmailNotifications.Application.Common.Notifications.Interfaces;
 using EmailNotifications.Application.Common.Notifications.Models;
+using EmailNotifications.Application.Reports.Models;
 using Microsoft.Extensions.Logging;
 
 namespace EmailNotifications.Application.Reports.Services;
@@ -23,6 +25,7 @@ public sealed class WeeklyReportService(
         
         try
         {
+            // 1. Call each individual report method
             var results = new[]
             {
                 await SendFedExWeeklyChargesSummaryAsync(cancellationToken),
@@ -32,6 +35,7 @@ public sealed class WeeklyReportService(
                 await SendInvalidEmployeeIdSummaryAsync(cancellationToken)
             };
             
+            // 2. Check if all reports were sent successfully
             var allSuccessful = results.All(r => r);
             if (allSuccessful)
             {
@@ -42,6 +46,7 @@ public sealed class WeeklyReportService(
                 _logger.LogWarning("Some weekly reports failed to send");
             }
             
+            // 3. Return overall success status
             return allSuccessful;
         }
         catch (Exception ex)
@@ -60,23 +65,39 @@ public sealed class WeeklyReportService(
         {
             _logger.LogInformation("Generating FedEx Weekly Charges Summary report");
             
-            var result = await _notificationService.SendAsync(NotificationTemplates.FedExWeeklyChargesSummary(
+            // 1. Initialize the data model
+            var model = new FedExWeeklyChargesSummaryDto();
+            
+            // 2-3. Query the database and process the data to populate the model
+            // TODO: Implement repository query and data processing 
+            // This will be implemented when data sources are connected
+            
+            // 4. Generate CSV data in memory
+            var dateRange = $"{DateTime.Now.AddDays(-7):yyyyMMdd}_to_{DateTime.Now:yyyyMMdd}";
+            var fileName = $"FedExWeeklyChargesSummary_{dateRange}.csv";
+            var csvBuilder = new StringBuilder();
+            
+            // 5. Create notification request with in-memory attachment
+            var request = NotificationTemplates.FedExWeeklyChargesSummary(
                 reportTitle: "FedEx Weekly Charges Summary",
                 dateRange: $"{DateTime.Now.AddDays(-7):yyyy-MM-dd} to {DateTime.Now:yyyy-MM-dd}",
-                totalShipments: 0, // TODO: Replace with actual value
-                totalCost: 0.00m // TODO: Replace with actual value
-            ), cancellationToken);
-
-            if (result)
+                totalShipments: 125,  // This will come from model
+                totalCost: 12345.67m  // This will come from model
+            );
+            
+            // Convert CSV string to byte array
+            var csvBytes = Encoding.UTF8.GetBytes(csvBuilder.ToString());
+            
+            // Add attachment to the request
+            request.AddAttachment(new CsvAttachment 
             {
-                _logger.LogInformation("FedEx Weekly Charges Summary report sent successfully");
-            }
-            else
-            {
-                _logger.LogWarning("Failed to send FedEx Weekly Charges Summary report");
-            }
-
-            return result;
+                FileName = fileName,
+                Content = csvBytes,
+                ContentType = "text/csv"
+            });
+            
+            // 6. Send the notification
+            return await _notificationService.SendAsync(request, cancellationToken);
         }
         catch (Exception ex)
         {
@@ -86,41 +107,57 @@ public sealed class WeeklyReportService(
     }
 
     /// <summary>
-    /// Sends the FedEx Weekly Detail Charges Summary report
+    /// Sends the FedEx Weekly Detailed Charges Summary report
     /// </summary>
     public async Task<bool> SendFedExWeeklyDetailChargesSummaryAsync(CancellationToken cancellationToken = default)
     {
         try
         {
-            _logger.LogInformation("Generating FedEx Weekly Detail Charges Summary report");
+            _logger.LogInformation("Generating FedEx Weekly Detailed Charges Summary report");
             
-            var result = await _notificationService.SendAsync(NotificationTemplates.FedExWeeklyDetailChargesSummary(
-                reportTitle: "FedEx Weekly Detail Charges Summary",
+            // 1. Initialize the data model
+            var model = new FedExWeeklyDetailChargesSummaryDto();
+            
+            // 2-3. Query the database and process the data to populate the model
+            // TODO: Implement repository query and data processing
+            // This will be implemented when data sources are connected
+            
+            // 4. Generate CSV data in memory
+            var dateRange = $"{DateTime.Now.AddDays(-7):yyyyMMdd}_to_{DateTime.Now:yyyyMMdd}";
+            var fileName = $"FedExWeeklyDetailChargesSummary_{dateRange}.csv";
+            var csvBuilder = new StringBuilder();
+            
+            // 5. Create notification request with in-memory attachment
+            var request = NotificationTemplates.FedExWeeklyDetailChargesSummary(
+                reportTitle: "FedEx Weekly Detailed Charges Summary",
                 dateRange: $"{DateTime.Now.AddDays(-7):yyyy-MM-dd} to {DateTime.Now:yyyy-MM-dd}",
-                totalShipments: 0, // TODO: Replace with actual value
-                totalCost: 0.00m // TODO: Replace with actual value
-            ), cancellationToken);
-
-            if (result)
+                totalShipments: 125,  // This will come from model
+                totalCost: 12345.67m  // This will come from model
+            );
+            
+            // Convert CSV string to byte array
+            var csvBytes = Encoding.UTF8.GetBytes(csvBuilder.ToString());
+            
+            // Add attachment to the request
+            request.AddAttachment(new CsvAttachment 
             {
-                _logger.LogInformation("FedEx Weekly Detail Charges Summary report sent successfully");
-            }
-            else
-            {
-                _logger.LogWarning("Failed to send FedEx Weekly Detail Charges Summary report");
-            }
-
-            return result;
+                FileName = fileName,
+                Content = csvBytes,
+                ContentType = "text/csv"
+            });
+            
+            // 6. Send the notification
+            return await _notificationService.SendAsync(request, cancellationToken);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error sending FedEx Weekly Detail Charges Summary report");
+            _logger.LogError(ex, "Error sending FedEx Weekly Detailed Charges Summary report");
             return false;
         }
     }
 
     /// <summary>
-    /// Sends a notification when a FedEx file is received
+    /// Sends a notification confirming receipt of a FedEx file
     /// </summary>
     public async Task<bool> SendFedExFileReceiptNotificationAsync(CancellationToken cancellationToken = default)
     {
@@ -128,22 +165,37 @@ public sealed class WeeklyReportService(
         {
             _logger.LogInformation("Generating FedEx File Receipt notification");
             
-            var result = await _notificationService.SendAsync(NotificationTemplates.FedExFileReceipt(
-                fileName: "WeeklyCharges.txt",
-                receivedDate: DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
-                processedDate: DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")
-            ), cancellationToken);
-
-            if (result)
+            // 1. Initialize the data model
+            var model = new FedExFileReceiptDto();
+            
+            // 2-3. Query the database and process the data to populate the model
+            // TODO: Implement repository query and data processing
+            // This will be implemented when data sources are connected
+            
+            // 4. Generate CSV data in memory
+            var fileName = $"FedExFileReceipt_{DateTime.Now:yyyyMMdd}.csv";
+            var csvBuilder = new StringBuilder();
+            
+            // 5. Create notification request with in-memory attachment
+            var request = NotificationTemplates.FedExFileReceipt(
+                fileName: "FedEx_Charges_20230101.csv",  // This will come from model
+                receivedDate: DateTime.Now.AddHours(-1).ToString("yyyy-MM-dd HH:mm"),  // This will come from model
+                processedDate: DateTime.Now.ToString("yyyy-MM-dd HH:mm")  // This will come from model
+            );
+            
+            // Convert CSV string to byte array
+            var csvBytes = Encoding.UTF8.GetBytes(csvBuilder.ToString());
+            
+            // Add attachment to the request
+            request.AddAttachment(new CsvAttachment 
             {
-                _logger.LogInformation("FedEx File Receipt notification sent successfully");
-            }
-            else
-            {
-                _logger.LogWarning("Failed to send FedEx File Receipt notification");
-            }
-
-            return result;
+                FileName = fileName,
+                Content = csvBytes,
+                ContentType = "text/csv"
+            });
+            
+            // 6. Send the notification
+            return await _notificationService.SendAsync(request, cancellationToken);
         }
         catch (Exception ex)
         {
@@ -153,7 +205,7 @@ public sealed class WeeklyReportService(
     }
 
     /// <summary>
-    /// Sends a report of tracking numbers by business unit
+    /// Sends the report of tracking numbers organized by business unit
     /// </summary>
     public async Task<bool> SendTrackingNumbersByBusinessUnitReportAsync(CancellationToken cancellationToken = default)
     {
@@ -161,22 +213,38 @@ public sealed class WeeklyReportService(
         {
             _logger.LogInformation("Generating Tracking Numbers by Business Unit report");
             
-            var result = await _notificationService.SendAsync(NotificationTemplates.TrackingNumbersByBusinessUnit(
+            // 1. Initialize the data model
+            var model = new TrackingNumbersByBusinessUnitDto();
+            
+            // 2-3. Query the database and process the data to populate the model
+            // TODO: Implement repository query and data processing
+            // This will be implemented when data sources are connected
+            
+            // 4. Generate CSV data in memory
+            var dateRange = $"{DateTime.Now.AddDays(-7):yyyyMMdd}_to_{DateTime.Now:yyyyMMdd}";
+            var fileName = $"TrackingNumbersByBusinessUnit_{dateRange}.csv";
+            var csvBuilder = new StringBuilder();
+            
+            // 5. Create notification request with in-memory attachment
+            var request = NotificationTemplates.TrackingNumbersByBusinessUnit(
                 reportTitle: "Weekly Tracking Numbers by Business Unit",
                 dateRange: $"{DateTime.Now.AddDays(-7):yyyy-MM-dd} to {DateTime.Now:yyyy-MM-dd}",
-                totalBusinessUnits: 0 // TODO: Replace with actual value
-            ), cancellationToken);
-
-            if (result)
+                totalBusinessUnits: 3  // This will come from model
+            );
+            
+            // Convert CSV string to byte array
+            var csvBytes = Encoding.UTF8.GetBytes(csvBuilder.ToString());
+            
+            // Add attachment to the request
+            request.AddAttachment(new CsvAttachment 
             {
-                _logger.LogInformation("Tracking Numbers by Business Unit report sent successfully");
-            }
-            else
-            {
-                _logger.LogWarning("Failed to send Tracking Numbers by Business Unit report");
-            }
-
-            return result;
+                FileName = fileName,
+                Content = csvBytes,
+                ContentType = "text/csv"
+            });
+            
+            // 6. Send the notification
+            return await _notificationService.SendAsync(request, cancellationToken);
         }
         catch (Exception ex)
         {
@@ -184,36 +252,51 @@ public sealed class WeeklyReportService(
             return false;
         }
     }
-    
+
     /// <summary>
-    /// Sends a summary of invalid employee IDs
+    /// Sends the report of invalid employee IDs
     /// </summary>
     public async Task<bool> SendInvalidEmployeeIdSummaryAsync(CancellationToken cancellationToken = default)
     {
         try
         {
-            _logger.LogInformation("Generating Invalid Employee ID Summary report");
+            _logger.LogInformation("Generating Invalid Employee ID report");
             
-            var result = await _notificationService.SendAsync(NotificationTemplates.InvalidEmployeeId(
-                reportTitle: "Weekly Invalid Employee ID Summary",
+            // 1. Initialize the data model
+            var model = new InvalidEmployeeIdDto();
+            
+            // 2-3. Query the database and process the data to populate the model
+            // TODO: Implement repository query and data processing
+            // This will be implemented when data sources are connected
+            
+            // 4. Generate CSV data in memory
+            var fileName = $"InvalidEmployeeIds_{DateTime.Now:yyyyMMdd}.csv";
+            var csvBuilder = new StringBuilder();
+            
+            // 5. Create notification request with in-memory attachment
+            var request = NotificationTemplates.InvalidEmployeeId(
+                reportTitle: "Weekly Invalid Employee ID Report",
                 reportDate: DateTime.Now.ToString("yyyy-MM-dd"),
-                totalInvalidIds: 0 // TODO: Replace with actual value
-            ), cancellationToken);
-
-            if (result)
+                totalInvalidIds: 3  // This will come from model
+            );
+            
+            // Convert CSV string to byte array
+            var csvBytes = Encoding.UTF8.GetBytes(csvBuilder.ToString());
+            
+            // Add attachment to the request
+            request.AddAttachment(new CsvAttachment 
             {
-                _logger.LogInformation("Invalid Employee ID Summary report sent successfully");
-            }
-            else
-            {
-                _logger.LogWarning("Failed to send Invalid Employee ID Summary report");
-            }
-
-            return result;
+                FileName = fileName,
+                Content = csvBytes,
+                ContentType = "text/csv"
+            });
+            
+            // 6. Send the notification
+            return await _notificationService.SendAsync(request, cancellationToken);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error sending Invalid Employee ID Summary report");
+            _logger.LogError(ex, "Error sending Invalid Employee ID report");
             return false;
         }
     }

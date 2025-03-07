@@ -1,7 +1,7 @@
 namespace EmailNotifications.Application.Common.Notifications.Interfaces;
 
 /// <summary>
-/// Represents an attachment that can be included with a notification
+/// Represents an attachment for a notification
 /// </summary>
 public interface IAttachment
 {
@@ -16,17 +16,17 @@ public interface IAttachment
     byte[] Content { get; }
     
     /// <summary>
-    /// Gets the content type (MIME type) of the file
+    /// Gets the content type of the attachment
     /// </summary>
     string ContentType { get; }
     
     /// <summary>
-    /// Gets whether the attachment should be displayed inline
+    /// Gets whether the attachment is inline
     /// </summary>
     bool IsInline { get; }
     
     /// <summary>
-    /// Gets the optional content ID for inline attachments
+    /// Gets the content ID of the attachment (for inline attachments)
     /// </summary>
     string? ContentId { get; }
 } 
