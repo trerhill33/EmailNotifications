@@ -5,7 +5,7 @@ namespace EmailNotifications.Application.Common.Notifications.Interfaces;
 public interface INotificationService
 {
     Task<bool> SendAsync<T>(
-        NotificationRequest<T> request, 
+        SendNotificationRequest<T> request, 
         CancellationToken cancellationToken = default) 
         where T : class, ITemplateDataModel;
 }

@@ -6,12 +6,12 @@ namespace EmailNotifications.Application.Common.Notifications.Models;
 /// <summary>
 /// Base interface for notification requests
 /// </summary>
-public interface INotificationRequest { }
+public interface SendNotificationRequest { }
 
 /// <summary>
 /// Represents a request to send a notification
 /// </summary>
-public sealed record NotificationRequest<T> : INotificationRequest where T : ITemplateDataModel
+public sealed record SendNotificationRequest<T> : SendNotificationRequest where T : ITemplateDataModel
 {
     /// <summary>
     /// Gets the notification type
@@ -29,23 +29,23 @@ public sealed record NotificationRequest<T> : INotificationRequest where T : ITe
     public IReadOnlyCollection<IAttachment> Attachments { get; } = Array.Empty<IAttachment>();
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="NotificationRequest{T}"/> class without attachments
+    /// Initializes a new instance of the <see cref="SendNotificationRequest{T}"/> class without attachments
     /// </summary>
     /// <param name="type">The notification type</param>
     /// <param name="data">The data model for the template</param>
-    public NotificationRequest(NotificationType type, T data)
+    public SendNotificationRequest(NotificationType type, T data)
     {
         Type = type;
         Data = data;
     }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="NotificationRequest{T}"/> class with attachments
+    /// Initializes a new instance of the <see cref="SendNotificationRequest{T}"/> class with attachments
     /// </summary>
     /// <param name="type">The notification type</param>
     /// <param name="data">The data model for the template</param>
     /// <param name="attachments">The collection of attachments to include with the notification</param>
-    public NotificationRequest(NotificationType type, T data, IReadOnlyCollection<IAttachment> attachments)
+    public SendNotificationRequest(NotificationType type, T data, IReadOnlyCollection<IAttachment> attachments)
     {
         Type = type;
         Data = data;

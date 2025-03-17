@@ -1,21 +1,20 @@
-using System;
-using System.Collections.Generic;
 using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using EmailNotifications.Application.Common.Notifications.Interfaces;
 using EmailNotifications.Application.Common.Notifications.Models;
-using EmailNotifications.Application.Reports.Interfaces;
 using Microsoft.Extensions.Logging;
 
 namespace EmailNotifications.Application.Reports.Reports;
 
-public class PendingApprovalNotificationsReport(
-    INotificationService notificationService,
-    ILogger<PendingApprovalNotificationsReport> logger)
-    : IPendingApprovalNotificationsReport
+public interface IPendingApprovalReport
 {
-    public async Task<bool> SendAsync(CancellationToken cancellationToken = default)
+    Task<bool> GenerateAsync(CancellationToken cancellationToken = default);
+}
+
+public class PendingApprovalReport(
+    INotificationService notificationService,
+    ILogger<PendingApprovalReport> logger) : IPendingApprovalReport
+{
+    public async Task<bool> GenerateAsync(CancellationToken cancellationToken = default)
     {
         try
         {
@@ -33,7 +32,7 @@ public class PendingApprovalNotificationsReport(
             };
 
             // Create the notification request with the attachment in one step
-            var request = NotificationTemplates.PendingApproval(
+            var request = NotificationFactory.PendingApproval(
                 approverName: "Jane Approver",
                 pendingCount: 3,
                 attachments: new List<IAttachment> { attachment }

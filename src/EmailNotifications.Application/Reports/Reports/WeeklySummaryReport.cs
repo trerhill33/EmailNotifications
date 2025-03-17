@@ -1,23 +1,26 @@
 using System.Text;
 using EmailNotifications.Application.Common.Notifications.Interfaces;
 using EmailNotifications.Application.Common.Notifications.Models;
-using EmailNotifications.Application.Reports.Interfaces;
 using Microsoft.Extensions.Logging;
 
 namespace EmailNotifications.Application.Reports.Reports;
 
-public class FedExRemittanceSummaryReport(
-    INotificationService notificationService,
-    ILogger<FedExRemittanceSummaryReport> logger)
-    : IFedExRemittanceSummaryReport
+public interface IWeeklySummaryReport
 {
-    public async Task<bool> SendAsync(CancellationToken cancellationToken = default)
+    Task<bool> GenerateAsync(CancellationToken cancellationToken = default);
+}
+
+public class WeeklySummaryReport(
+    INotificationService notificationService,
+    ILogger<WeeklySummaryReport> logger) : IWeeklySummaryReport
+{
+    public async Task<bool> GenerateAsync(CancellationToken cancellationToken = default)
     {
         try
         {
             // Create a simple CSV file (headers only for this example)
-            var fileName = $"FedExRemittanceDetails_{DateTime.Now:yyyyMMdd}.csv";
-            var csvBytes = Encoding.UTF8.GetBytes("TrackingNumber,Date,Amount,BusinessUnit,ServiceType,Reference");
+            var fileName = $"WeeklySummary{DateTime.Now:yyyyMMdd}.csv";
+            var csvBytes = Encoding.UTF8.GetBytes("reportTitle,totalShipments,totalCost");
 
             // Create the attachment
             var attachment = new FileAttachment
@@ -29,10 +32,10 @@ public class FedExRemittanceSummaryReport(
             };
 
             // Create the notification request with the attachment in one step
-            var request = NotificationTemplates.FedExRemittanceSummary(
-                reportTitle: "FedEx Daily Remittance Details",
-                dateRange: DateTime.Now.ToString("yyyy-MM-dd"),
-                totalRemittance: 0m,
+            var request = NotificationFactory.WeeklySummary(
+                reportTitle: "New Weekly Summary",
+                totalShipments: 3,
+                totalCost: 43,
                 attachments: new List<IAttachment> { attachment }
             );
 
@@ -41,8 +44,8 @@ public class FedExRemittanceSummaryReport(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error sending FedEx Remittance Details report");
+            logger.LogError(ex, "Error sending Pending Approval notifications");
             return false;
         }
     }
-}
+} 

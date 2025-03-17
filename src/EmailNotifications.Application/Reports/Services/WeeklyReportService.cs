@@ -1,17 +1,21 @@
-using EmailNotifications.Application.Reports.Interfaces;
+using EmailNotifications.Application.Reports.Reports;
 using Microsoft.Extensions.Logging;
 
 namespace EmailNotifications.Application.Reports.Services;
+
+public interface IWeeklyReportService
+{
+    Task<bool> GenerateAndSendAllReportsAsync(CancellationToken cancellationToken = default);
+    Task<bool> GeneratePendingApprovalReport(CancellationToken cancellationToken = default);
+    Task<bool> GenerateWeeklySummaryReport(CancellationToken cancellationToken = default);
+}
 
 /// <summary>
 /// Implementation of the weekly report service
 /// </summary>
 public sealed class WeeklyReportService(
-    IFedExWeeklyChargesSummaryReport fedExWeeklyChargesSummaryReport,
-    IFedExWeeklyDetailChargesSummaryReport fedExWeeklyDetailChargesSummaryReport,
-    IFedExFileReceiptReport fedExFileReceiptReport,
-    ITrackingNumbersByBusinessUnitReport trackingNumbersByBusinessUnitReport,
-    IInvalidEmployeeIdReport invalidEmployeeIdReport,
+    IPendingApprovalReport pendingApprovalNotificationsReport,
+    IWeeklySummaryReport weeklySummaryReport,
     ILogger<WeeklyReportService> logger) : IWeeklyReportService
 {
     /// <summary>
@@ -26,11 +30,7 @@ public sealed class WeeklyReportService(
             // 1. Call each individual report method
             var results = new[]
             {
-                await SendFedExWeeklyChargesSummaryAsync(cancellationToken),
-                await SendFedExWeeklyDetailChargesSummaryAsync(cancellationToken),
-                await SendFedExFileReceiptNotificationAsync(cancellationToken),
-                await SendTrackingNumbersByBusinessUnitReportAsync(cancellationToken),
-                await SendInvalidEmployeeIdSummaryAsync(cancellationToken)
+                await GeneratePendingApprovalReport(cancellationToken),
             };
             
             // 2. Check if all reports were sent successfully
@@ -53,44 +53,9 @@ public sealed class WeeklyReportService(
             return false;
         }
     }
-
-    /// <summary>
-    /// Sends the FedEx weekly charges summary report
-    /// </summary>
-    public async Task<bool> SendFedExWeeklyChargesSummaryAsync(CancellationToken cancellationToken = default)
-    {
-        return await fedExWeeklyChargesSummaryReport.SendAsync(cancellationToken);
-    }
-
-    /// <summary>
-    /// Sends the FedEx weekly detail charges summary report
-    /// </summary>
-    public async Task<bool> SendFedExWeeklyDetailChargesSummaryAsync(CancellationToken cancellationToken = default)
-    {
-        return await fedExWeeklyDetailChargesSummaryReport.SendAsync(cancellationToken);
-    }
-
-    /// <summary>
-    /// Sends a notification when a FedEx file is received
-    /// </summary>
-    public async Task<bool> SendFedExFileReceiptNotificationAsync(CancellationToken cancellationToken = default)
-    {
-        return await fedExFileReceiptReport.SendAsync(cancellationToken);
-    }
-
-    /// <summary>
-    /// Sends a report of tracking numbers by business unit
-    /// </summary>
-    public async Task<bool> SendTrackingNumbersByBusinessUnitReportAsync(CancellationToken cancellationToken = default)
-    {
-        return await trackingNumbersByBusinessUnitReport.SendAsync(cancellationToken);
-    }
-
-    /// <summary>
-    /// Sends a report of invalid employee IDs
-    /// </summary>
-    public async Task<bool> SendInvalidEmployeeIdSummaryAsync(CancellationToken cancellationToken = default)
-    {
-        return await invalidEmployeeIdReport.SendAsync(cancellationToken);
-    }
+    
+    public async Task<bool> GeneratePendingApprovalReport(CancellationToken cancellationToken = default)
+        => await pendingApprovalNotificationsReport.GenerateAsync(cancellationToken);   
+    public async Task<bool> GenerateWeeklySummaryReport(CancellationToken cancellationToken = default)
+        => await weeklySummaryReport.GenerateAsync(cancellationToken);
 } 

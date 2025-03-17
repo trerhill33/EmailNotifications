@@ -1,4 +1,4 @@
-using EmailNotifications.Application.Reports;
+using EmailNotifications.Application.Reports.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EmailNotifications.Api.Controllers;
@@ -9,34 +9,12 @@ namespace EmailNotifications.Api.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 public class ReportsController(
-    IDailyReportService dailyReportService,
     IWeeklyReportService weeklyReportService,
     ILogger<ReportsController> logger)
     : ControllerBase
 {
-    private readonly IDailyReportService _dailyReportService = dailyReportService ?? throw new ArgumentNullException(nameof(dailyReportService));
     private readonly IWeeklyReportService _weeklyReportService = weeklyReportService ?? throw new ArgumentNullException(nameof(weeklyReportService));
     private readonly ILogger<ReportsController> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-
-    /// <summary>
-    /// Generates and sends all daily reports
-    /// </summary>
-    [HttpPost("daily")]
-    public async Task<IActionResult> GenerateDailyReports(CancellationToken cancellationToken)
-    {
-        try
-        {
-            _logger.LogInformation("Starting daily report generation");
-            await _dailyReportService.GenerateAndSendAllReportsAsync(cancellationToken);
-            _logger.LogInformation("Daily report generation completed successfully");
-            return Ok();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error generating daily reports");
-            return StatusCode(500, "An error occurred while generating daily reports");
-        }
-    }
 
     /// <summary>
     /// Generates and sends all weekly reports
@@ -59,52 +37,6 @@ public class ReportsController(
     }
 
     /// <summary>
-    /// Generates and sends a specific daily report
-    /// </summary>
-    [HttpPost("daily/{reportType}")]
-    public async Task<IActionResult> GenerateSpecificDailyReport(
-        [FromRoute] string reportType,
-        CancellationToken cancellationToken)
-    {
-        try
-        {
-            _logger.LogInformation("Starting specific daily report generation: {ReportType}", reportType);
-
-            switch (reportType.ToLower())
-            {
-                case "fedex-remittance-summary":
-                    await _dailyReportService.SendFedExRemittanceSummaryAsync(cancellationToken);
-                    break;
-                case "fedex-remittance-details":
-                    await _dailyReportService.SendFedExRemittanceDetailsAsync(cancellationToken);
-                    break;
-                case "fedex-file-missing":
-                    await _dailyReportService.SendFedExFileMissingNotificationAsync(cancellationToken);
-                    break;
-                case "reassigned-tracking":
-                    await _dailyReportService.SendReassignedTrackingNumbersReportAsync(cancellationToken);
-                    break;
-                case "delayed-invoices":
-                    await _dailyReportService.SendDelayedInvoicesReportAsync(cancellationToken);
-                    break;
-                case "pending-approval":
-                    await _dailyReportService.SendPendingApprovalNotificationsAsync(cancellationToken);
-                    break;
-                default:
-                    return BadRequest($"Unknown report type: {reportType}");
-            }
-
-            _logger.LogInformation("Specific daily report generation completed successfully: {ReportType}", reportType);
-            return Ok();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error generating specific daily report: {ReportType}", reportType);
-            return StatusCode(500, $"An error occurred while generating the {reportType} report");
-        }
-    }
-
-    /// <summary>
     /// Generates and sends a specific weekly report
     /// </summary>
     [HttpPost("weekly/{reportType}")]
@@ -118,20 +50,11 @@ public class ReportsController(
 
             switch (reportType.ToLower())
             {
-                case "fedex-weekly-charges":
-                    await _weeklyReportService.SendFedExWeeklyChargesSummaryAsync(cancellationToken);
+                case "pending-approvals":
+                    await _weeklyReportService.GeneratePendingApprovalReport(cancellationToken);
                     break;
-                case "fedex-weekly-detail-charges":
-                    await _weeklyReportService.SendFedExWeeklyDetailChargesSummaryAsync(cancellationToken);
-                    break;
-                case "fedex-file-receipt":
-                    await _weeklyReportService.SendFedExFileReceiptNotificationAsync(cancellationToken);
-                    break;
-                case "tracking-by-business-unit":
-                    await _weeklyReportService.SendTrackingNumbersByBusinessUnitReportAsync(cancellationToken);
-                    break;
-                case "invalid-employee-id":
-                    await _weeklyReportService.SendInvalidEmployeeIdSummaryAsync(cancellationToken);
+                case "weekly-summary":
+                    await _weeklyReportService.GenerateWeeklySummaryReport(cancellationToken);
                     break;
                 default:
                     return BadRequest($"Unknown report type: {reportType}");

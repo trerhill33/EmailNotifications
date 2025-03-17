@@ -4,44 +4,44 @@ namespace EmailNotifications.Infrastructure.Configuration;
 /// Configuration settings for the mail relay server
 /// </summary>
 public class MailRelaySettings
-{
-    /// <summary>
-    /// Gets or sets the mail relay server hostname
-    /// </summary>
-    public required string Server { get; init; }
+    {
+        /// <summary>
+        /// The SMTP server hostname (e.g., "mailrelay.dev.com").
+        /// </summary>
+        public required string Server { get; init; }
 
-    /// <summary>
-    /// Gets or sets the mail relay server port (should be 587 for SMTP over TLS)
-    /// </summary>
-    public int Port { get; init; } = 587;
+        /// <summary>
+        /// The SMTP server port (e.g., 587).
+        /// </summary>
+        public required int Port { get; init; }
 
-    /// <summary>
-    /// Gets or sets whether to use SSL/TLS for the connection
-    /// </summary>
-    public bool UseSsl { get; init; } = true;
+        /// <summary>
+        /// Indicates whether SSL/TLS should be used for the SMTP connection.
+        /// </summary>
+        public required bool UseSsl { get; init; }
 
-    /// <summary>
-    /// Gets or sets the path to the intermediate certificate file
-    /// </summary>
-    public string? IntermediateCertificatePath { get; init; }
+        /// <summary>
+        /// Indicates whether custom server certificate validation is enabled.
+        /// </summary>
+        public bool UseCustomServerCertificateValidation { get; set; }
 
-    /// <summary>
-    /// Gets or sets the sender's email address
-    /// </summary>
-    public required string SenderEmail { get; init; }
+        /// <summary>
+        /// The secret ID in AWS Secrets Manager for the intermediate certificate (e.g., "dev--mail-cert-test").
+        /// </summary>
+        public string? ServerIntermediateCertificateSecret { get; set; }
 
-    /// <summary>
-    /// Gets or sets the sender's display name
-    /// </summary>
-    public required string SenderName { get; init; }
+        /// <summary>
+        /// The timeout of smtp server connection
+        /// </summary>
+        public required int Timeout { get; set; }
+        
+        /// <summary>
+        /// The maximum number of retry attempts for sending an email (e.g., 3).
+        /// </summary>
+        public required int MaxRetryAttempts { get; init; }
 
-    /// <summary>
-    /// Maximum number of retry attempts when sending fails with a transient error
-    /// </summary>
-    public int MaxRetryAttempts { get; init; } = 3;
-
-    /// <summary>
-    /// Initial delay between retry attempts in milliseconds
-    /// </summary>
-    public int RetryDelayMilliseconds { get; init; } = 1000;
-} 
+        /// <summary>
+        /// The delay in milliseconds between retry attempts (e.g., 1000).
+        /// </summary>
+        public required int RetryDelayMilliseconds { get; init; }
+    }

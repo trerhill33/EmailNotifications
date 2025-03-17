@@ -43,7 +43,7 @@ public class NotificationsController : ControllerBase
             _logger.LogInformation("Sending new user notification for user {FirstName} {LastName}",
                 request.FirstName, request.LastName);
 
-            var notificationRequest = NotificationTemplates.UserCreated(
+            var notificationRequest = NotificationFactory.UserCreated(
                 request.FirstName,
                 request.LastName,
                 DateTime.UtcNow.ToString("f")
@@ -85,7 +85,7 @@ public class NotificationsController : ControllerBase
         {
             _logger.LogInformation("Sending password reset notification for user {FirstName}", request.FirstName);
 
-            var notificationRequest = NotificationTemplates.PasswordReset(
+            var notificationRequest = NotificationFactory.PasswordReset(
                 request.FirstName,
                 request.OneTimePassword,
                 DateTime.UtcNow.AddHours(request.ExpiryHours).ToString("f")

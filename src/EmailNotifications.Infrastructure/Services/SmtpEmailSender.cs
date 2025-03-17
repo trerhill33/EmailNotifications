@@ -1,7 +1,11 @@
+using System.Net;
 using System.Net.Mail;
+using System.Net.Mime;
 using System.Security.Cryptography.X509Certificates;
+using System.Text;
 using EmailNotifications.Infrastructure.Configuration;
 using EmailNotifications.Infrastructure.Exceptions;
+using EmailNotifications.Infrastructure.Helper;
 using EmailNotifications.Infrastructure.Interfaces;
 using EmailNotifications.Infrastructure.Models;
 using Microsoft.Extensions.Logging;
@@ -9,170 +13,108 @@ using Microsoft.Extensions.Options;
 
 namespace EmailNotifications.Infrastructure.Services;
 
-public class SmtpEmailSender : IEmailSender
+public class SmtpEmailSender(
+    IOptions<MailRelaySettings> settings,
+    ICertHelper certHelper,
+    ILogger<SmtpEmailSender> logger)
+    : IEmailSender
 {
-    private readonly SmtpClient _smtpClient;
-    private readonly ILogger<SmtpEmailSender> _logger;
-    private readonly MailRelaySettings _settings;
+    private readonly ILogger<SmtpEmailSender> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    private readonly MailRelaySettings _settings = settings?.Value ?? throw new ArgumentNullException(nameof(settings));
+    private readonly ICertHelper _certHelper = certHelper ?? throw new ArgumentNullException(nameof(certHelper));
 
-    public SmtpEmailSender(
-        IOptions<MailRelaySettings> settings,
-        ILogger<SmtpEmailSender> logger)
-    {
-        _settings = settings?.Value ?? throw new ArgumentNullException(nameof(settings));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-
-        try
-        {
-            // Configure the SMTP client with the mail relay settings
-            _smtpClient = new SmtpClient(_settings.Server, _settings.Port)
-            {
-                EnableSsl = _settings.UseSsl
-            };
-
-            // If an intermediate certificate is provided, load it
-            if (string.IsNullOrEmpty(_settings.IntermediateCertificatePath)) return;
-            
-            try
-            {
-                var certificate = new X509Certificate2(_settings.IntermediateCertificatePath);
-                _smtpClient.ClientCertificates.Add(certificate);
-                _logger.LogInformation(
-                    "Loaded intermediate certificate from {CertificatePath} for SMTP server {Server}:{Port}",
-                    _settings.IntermediateCertificatePath,
-                    _settings.Server,
-                    _settings.Port);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(
-                    ex,
-                    "Failed to load intermediate certificate from {CertificatePath} for SMTP server {Server}:{Port}",
-                    _settings.IntermediateCertificatePath,
-                    _settings.Server,
-                    _settings.Port);
-                throw new EmailConfigurationException(
-                    $"Failed to load intermediate certificate from {_settings.IntermediateCertificatePath}", 
-                    ex);
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(
-                ex,
-                "Failed to configure SMTP client for server {Server}:{Port}",
-                _settings.Server,
-                _settings.Port);
-            throw new EmailConfigurationException("Failed to configure SMTP client", ex);
-        }
-    }
     public async Task SendEmailAsync(EmailMessage emailMessage, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(emailMessage);
 
         var correlationId = Guid.NewGuid().ToString();
         var recipients = string.Join(", ", emailMessage.To.Select(t => t.Address));
-        var attempts = 0;
-        var retryDelayMs = _settings.RetryDelayMilliseconds;
 
-        _logger.LogInformation(
-            "Starting email send operation {CorrelationId} to {Recipients}. Max attempts: {MaxAttempts}",
-            correlationId,
-            recipients,
-            _settings.MaxRetryAttempts);
+        _logger.LogInformation("Starting email send operation {CorrelationId} to {Recipients}. Max attempts: {MaxAttempts}",
+            correlationId, recipients, _settings.MaxRetryAttempts);
 
+        using var smtpClient = CreateSmtpClient();
         using var mailMessage = CreateMailMessage(emailMessage);
 
-        while (attempts < _settings.MaxRetryAttempts)
+        await SendWithRetryAsync(smtpClient, mailMessage, correlationId, recipients, cancellationToken);
+    }
+
+    private SmtpClient CreateSmtpClient()
+    {
+        var smtpClient = new SmtpClient(_settings.Server, _settings.Port)
+        {
+            EnableSsl = _settings.UseSsl,
+            Timeout = _settings.Timeout
+        };
+
+        if (_settings.UseCustomServerCertificateValidation &&
+            !string.IsNullOrEmpty(_settings.ServerIntermediateCertificateSecret))
         {
             try
             {
-                attempts++;
-                _logger.LogDebug(
-                    "Attempt {Attempt} of {MaxAttempts} to send email {CorrelationId} via SMTP server {Server}:{Port}",
-                    attempts,
-                    _settings.MaxRetryAttempts,
-                    correlationId,
-                    _settings.Server,
-                    _settings.Port);
+                var intermediateCerts = _certHelper.GetIntermediateCertificatesAsync(_settings.ServerIntermediateCertificateSecret);
 
-                await _smtpClient.SendMailAsync(mailMessage, cancellationToken);
+                ServicePointManager.ServerCertificateValidationCallback = (sender, cert, chain, sslPolicyErrors) =>
+                {
+                    _logger.LogDebug("Validating server certificate for {Server}:{Port}. SSL policy errors: {SslPolicyErrors}",
+                        _settings.Server, _settings.Port, sslPolicyErrors);
 
-                _logger.LogInformation(
-                    "Email {CorrelationId} sent successfully to {Recipients} on attempt {Attempt}",
-                    correlationId,
-                    recipients,
-                    attempts);
-                
-                return;
-            }
-            catch (SmtpException ex) when (IsTransientError(ex) && attempts < _settings.MaxRetryAttempts)
-            {
-                _logger.LogWarning(
-                    ex,
-                    "Transient SMTP error on attempt {Attempt} of {MaxAttempts} for email {CorrelationId}. " +
-                    "Retrying in {RetryDelay}ms. Status code: {StatusCode}",
-                    attempts,
-                    _settings.MaxRetryAttempts,
-                    correlationId,
-                    retryDelayMs,
-                    ex.StatusCode);
+                    chain.ChainPolicy.ExtraStore.AddRange(intermediateCerts);
 
-                await Task.Delay(retryDelayMs, cancellationToken);
+                    var isValid = chain.Build((X509Certificate2)cert);
 
-                // Increase delay for next retry (exponential backoff)
-                retryDelayMs *= 2;
+                    if (!isValid)
+                    {
+                        _logger.LogWarning("Server certificate chain validation failed for {Server}:{Port}. Chain status: {ChainStatus}",
+                            _settings.Server, _settings.Port,
+                            string.Join(", ", chain.ChainStatus.Select(s => s.Status)));
+                    }
+                    else
+                    {
+                        _logger.LogDebug("Server certificate chain validation succeeded for {Server}:{Port}",
+                            _settings.Server, _settings.Port);
+                    }
+
+                    return isValid;
+                };
+
+                _logger.LogInformation("Configured custom server certificate validation for {Server}:{Port}", _settings.Server, _settings.Port);
             }
             catch (Exception ex)
             {
-                _logger.LogError(
-                    ex,
-                    "Failed to send email {CorrelationId} to {Recipients}. Subject: {Subject}. Error: {ErrorMessage}",
-                    correlationId,
-                    recipients,
-                    emailMessage.Subject,
-                    ex.Message);
-                throw new EmailSendException($"Failed to send email to {recipients}", ex);
+                _logger.LogError(ex, "Failed to configure server certificate validation for {Server}:{Port}", _settings.Server, _settings.Port);
+                throw new EmailConfigurationException("Failed to configure server certificate validation", ex);
             }
         }
 
-        var exception = new EmailSendException($"Failed to send email to {recipients} after {_settings.MaxRetryAttempts} attempts");
-        _logger.LogError(
-            exception,
-            "Failed to send email {CorrelationId} after {MaxAttempts} attempts",
-            correlationId,
-            _settings.MaxRetryAttempts);
-        throw exception;
+        return smtpClient;
     }
-
+    
     private static MailMessage CreateMailMessage(EmailMessage emailMessage)
     {
         var mailMessage = new MailMessage
         {
             Subject = emailMessage.Subject,
-            Body = emailMessage.HtmlBody,
-            IsBodyHtml = true,
             From = emailMessage.From,
             Priority = (MailPriority)emailMessage.Priority
         };
 
+        // Set HTML body as an AlternateView with UTF-8 encoding
+        var htmlView = AlternateView.CreateAlternateViewFromString(
+            emailMessage.HtmlBody,
+            Encoding.UTF8, // Use Encoding instead of ContentType
+            "text/html");
+        htmlView.TransferEncoding = TransferEncoding.SevenBit; // Avoid Quoted-Printable encoding
+        mailMessage.AlternateViews.Add(htmlView);
+
         if (emailMessage.TextBody is not null)
         {
-            // Add plain text alternative view (Better support)
             var plainView = AlternateView.CreateAlternateViewFromString(
                 emailMessage.TextBody,
-                null,
+                Encoding.UTF8,
                 "text/plain");
-
+            plainView.TransferEncoding = TransferEncoding.SevenBit; // Avoid Quoted-Printable encoding
             mailMessage.AlternateViews.Add(plainView);
-
-            // Add HTML view
-            var htmlView = AlternateView.CreateAlternateViewFromString(
-                emailMessage.HtmlBody,
-                null,
-                "text/html");
-
-            mailMessage.AlternateViews.Add(htmlView);
         }
 
         if (emailMessage.ReplyTo is not null)
@@ -195,7 +137,6 @@ public class SmtpEmailSender : IEmailSender
             mailMessage.Bcc.Add(recipient);
         }
 
-        // Add attachments if any
         foreach (var attachment in emailMessage.Attachments)
         {
             try
@@ -212,9 +153,48 @@ public class SmtpEmailSender : IEmailSender
         return mailMessage;
     }
 
+    private async Task SendWithRetryAsync(SmtpClient smtpClient, MailMessage mailMessage, string correlationId, string recipients, CancellationToken cancellationToken)
+    {
+        var attempts = 0;
+        var retryDelayMs = _settings.RetryDelayMilliseconds;
+
+        while (attempts < _settings.MaxRetryAttempts)
+        {
+            try
+            {
+                attempts++;
+                _logger.LogDebug("Attempt {Attempt} of {MaxAttempts} to send email {CorrelationId} via SMTP server {Server}:{Port}",
+                    attempts, _settings.MaxRetryAttempts, correlationId, _settings.Server, _settings.Port);
+
+                await smtpClient.SendMailAsync(mailMessage, cancellationToken);
+
+                _logger.LogInformation("Email {CorrelationId} sent successfully to {Recipients} on attempt {Attempt}",
+                    correlationId, recipients, attempts);
+                return;
+            }
+            catch (SmtpException ex) when (IsTransientError(ex) && attempts < _settings.MaxRetryAttempts)
+            {
+                _logger.LogWarning(ex, "Transient SMTP error on attempt {Attempt} of {MaxAttempts} for email {CorrelationId}. Retrying in {RetryDelay}ms. Status code: {StatusCode}",
+                    attempts, _settings.MaxRetryAttempts, correlationId, retryDelayMs, ex.StatusCode);
+
+                await Task.Delay(retryDelayMs, cancellationToken);
+                retryDelayMs *= 2; // Exponential backoff
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to send email {CorrelationId} to {Recipients}. Subject: {Subject}. Error: {ErrorMessage}",
+                    correlationId, recipients, mailMessage.Subject, ex.Message);
+                throw new EmailSendException($"Failed to send email to {recipients}", ex);
+            }
+        }
+
+        var exception = new EmailSendException($"Failed to send email to {recipients} after {_settings.MaxRetryAttempts} attempts");
+        _logger.LogError(exception, "Failed to send email {CorrelationId} after {MaxAttempts} attempts",
+            correlationId, _settings.MaxRetryAttempts);
+        throw exception;
+    }
+
     private static bool IsTransientError(SmtpException exception) =>
-        // Consider certain SMTP status codes as transient errors
-        // See: https://datatracker.ietf.org/doc/html/rfc5321#section-4.2.1
         exception.StatusCode switch
         {
             SmtpStatusCode.ServiceNotAvailable => true,

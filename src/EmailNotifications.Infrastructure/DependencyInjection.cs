@@ -1,5 +1,4 @@
 using EmailNotifications.Application.Common.Notifications.Interfaces;
-using EmailNotifications.Application.Services;
 using EmailNotifications.Infrastructure.Configuration;
 using EmailNotifications.Infrastructure.Interfaces;
 using EmailNotifications.Infrastructure.Persistence;

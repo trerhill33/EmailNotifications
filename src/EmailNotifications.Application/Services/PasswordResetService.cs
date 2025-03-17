@@ -28,7 +28,7 @@ public sealed class PasswordResetService(
 
             var expiryTime = DateTime.UtcNow.AddHours(expiryHours);
 
-            var result = await _notificationService.SendAsync(NotificationTemplates.PasswordReset(
+            var result = await _notificationService.SendAsync(NotificationFactory.PasswordReset(
                 firstName,
                 oneTimePassword,
                 expiryTime.ToString("f")
